@@ -4,6 +4,7 @@ import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import NextTopLoader from "nextjs-toploader";
 import { ThemeProvider } from "@/components/theme-provider";
+import Providers from "./providers";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -33,7 +34,7 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Admin Panel",
+    title: "Piscícola New York",
   },
 };
 
@@ -46,9 +47,8 @@ export default function RootLayout({
     <html lang="es" suppressHydrationWarning>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <NextTopLoader color="#3b82f6" showSpinner height={3} crawlSpeed={150} shadow="0 0 10px #3b82f6, 0 0 5px #3b82f6" />
-        <ThemeProvider>
-          {children}
-        </ThemeProvider>
+                <Providers>{children}</Providers>
+
         <Toaster richColors position="top-right" />
       </body>
     </html>

@@ -1,19 +1,22 @@
-import { ReactNode } from "react";
-import { redirect } from "next/navigation";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { AppSidebar } from "@/components/sidebar";
-import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { ReactNode } from "react"
+import { redirect } from "next/navigation"
+import { cookies } from "next/headers"
+import { AppSidebar } from "@/components/sidebar"
+import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 
 export default async function DashboardLayout({ children }: { children: ReactNode }) {
-  const supabase = await createSupabaseServerClient();
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
+  // Lee cookie de auth
+  const cookieStore = await cookies()
+  const token = cookieStore.get("auth_token")?.value
 
-  // Protección adicional: si no hay sesión, redirigir al login
-  if (!session) {
-    redirect("/login");
+  // Si no hay token => al login
+  if (!token) {
+    redirect("/login")
   }
+
+  // (Opcional) validar token con tu backend:
+  // const isValid = await validateTokenOnServer(token)
+  // if (!isValid) redirect("/login")
 
   return (
     <SidebarProvider>
@@ -33,5 +36,5 @@ export default async function DashboardLayout({ children }: { children: ReactNod
         </main>
       </div>
     </SidebarProvider>
-  );
+  )
 }

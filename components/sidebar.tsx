@@ -2,8 +2,9 @@
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
-import { LayoutDashboard, BarChart3, User, ChevronRight, LogOut } from "lucide-react"
+import { LayoutDashboard, ChevronRight, LogOut, ChevronDown, Folder, User, Settings } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useAuth } from "@/lib/auth-context"
 
 import {
   Sidebar,
@@ -18,6 +19,9 @@ import {
   SidebarMenuItem,
   SidebarSeparator,
   useSidebar,
+  SidebarMenuSub,
+  SidebarMenuSubItem,
+  SidebarMenuSubButton,
 } from "@/components/ui/sidebar"
 import {
   DropdownMenu,
@@ -27,85 +31,60 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Badge } from "@/components/ui/badge"
 import { ModeToggle } from "@/components/mode-toggle"
-import { createSupabaseBrowserClient } from "@/lib/supabase/client"
-
-// 🧭 Navegación principal
-const mainNavItems = [
-  {
-    title: "Dashboard",
-    url: "/dashboard",
-    icon: LayoutDashboard,
-    badge: null,
-  },
-  {
-    title: "Estadísticas",
-    url: "/estadisticas",
-    icon: BarChart3,
-    badge: "Nuevo",
-  },
-  {
-    title: "Mi Perfil",
-    url: "/perfil",
-    icon: User,
-    badge: null,
-  },
-]
 
 export function AppSidebar() {
   const pathname = usePathname()
   const router = useRouter()
   const { state } = useSidebar()
   const isCollapsed = state === "collapsed"
+  const { token, menu, role, logout } = useAuth()
+  const [userInfo, setUserInfo] = useState({ email: "Usuario", initials: "US" })
 
-  const handleLogout = async () => {
-    const supabase = createSupabaseBrowserClient()
-    await supabase.auth.signOut()
+  const handleLogout = () => {
+    logout()
     router.replace("/login")
   }
 
-  // Cargar el usuario actual
-  const [userEmail, setUserEmail] = useState<string | null>(null)
+  // Extraer email del token JWT
   useEffect(() => {
-    const load = async () => {
-      const supabase = createSupabaseBrowserClient()
-      const {
-        data: { session },
-      } = await supabase.auth.getSession()
-      setUserEmail(session?.user?.email ?? null)
+    if (token) {
+      try {
+        const payload = JSON.parse(atob(token.split(".")[1]))
+        const email = payload.email || "Usuario"
+        const initials = email.split("@")[0].slice(0, 2).toUpperCase()
+        setUserInfo({ email, initials })
+      } catch {
+        // Si hay error al parsear, mantener defaults
+      }
     }
-    load()
-  }, [])
+  }, [token])
 
-  const initials = userEmail?.split("@")[0].slice(0, 2).toUpperCase() ?? "US"
-  const displayName = userEmail ? userEmail.split("@")[0].replace(/\./g, " ") : "Administrador"
+  if (!token || !menu) {
+    return null
+  }
 
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border bg-sidebar">
       {/* HEADER */}
       <SidebarHeader className="px-3 py-4 bg-transparent">
         <div className="flex items-center gap-3">
-          {/* Logo */}
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg overflow-hidden shadow-sm flex-shrink-0">
-            <img
-              src="/Icono.jpg"
-              alt="Logo"
-              className="h-full w-full object-cover"
-            />
+          <div className="flex h-9 w-9 items-center justify-center  ">
+            <img src="/LOGO-1.png" alt="Logo" className="h-full w-full object-cover" />
           </div>
 
           {!isCollapsed && (
             <>
               <div className="flex flex-col flex-1 min-w-0">
                 <span className="text-base font-bold leading-tight tracking-tight text-sidebar-foreground truncate">
-                  Admin Panel
+PNY
                 </span>
-                <span className="text-xs font-medium text-sidebar-foreground/60 truncate">Gestión de clientes</span>
+                                <span className="text-xs font-medium text-sidebar-foreground/60 truncate">Piscícola New York S.A.</span>
+                <span className="text-xs font-medium text-sidebar-foreground/60 truncate">{role}</span>
               </div>
 
-              {/* ModeToggle button in the header */}
               <div className="flex-shrink-0">
                 <ModeToggle />
               </div>
@@ -116,8 +95,9 @@ export function AppSidebar() {
 
       <SidebarSeparator className="my-1 bg-sidebar-border/50" />
 
-      {/* CONTENIDO PRINCIPAL */}
+      {/* CONTENIDO PRINCIPAL - Dinámico desde API */}
       <SidebarContent>
+        {/* Dashboard siempre visible */}
         <SidebarGroup>
           {!isCollapsed && (
             <SidebarGroupLabel className="px-3 text-xs font-semibold uppercase tracking-wider text-sidebar-foreground/60">
@@ -126,57 +106,147 @@ export function AppSidebar() {
           )}
           <SidebarGroupContent className={cn("px-2", isCollapsed && "px-1")}>
             <SidebarMenu className="gap-0.5">
-              {mainNavItems.map((item) => {
-                const isActive = pathname === item.url
-                return (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton
-                      asChild
-                      isActive={isActive}
-                      tooltip={item.title}
-                      className={cn(
-                        "group relative h-10 transition-all duration-200 rounded-md",
-                        isActive
-                          ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
-                          : "hover:bg-sidebar-accent/50 text-sidebar-foreground/70 hover:text-sidebar-foreground",
-                        isCollapsed && "justify-center px-0"
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  isActive={pathname === "/dashboard"}
+                  tooltip="Dashboard"
+                  className={cn(
+                    "group relative h-10 transition-all duration-200 rounded-md",
+                    pathname === "/dashboard"
+                      ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                      : "hover:bg-sidebar-accent/50 text-sidebar-foreground/70 hover:text-sidebar-foreground",
+                    isCollapsed && "justify-center px-0",
+                  )}
+                >
+                  <Link href="/dashboard" className="flex items-center w-full">
+                    <LayoutDashboard className={cn("flex-shrink-0", isCollapsed ? "h-5 w-5" : "h-4 w-4")} />
+                    {!isCollapsed && <span className="flex-1 truncate text-sm ml-3">Dashboard</span>}
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        {menu.length > 0 && (
+          <SidebarGroup>
+            {!isCollapsed && (
+              <SidebarGroupLabel className="px-3 text-xs font-semibold uppercase tracking-wider text-sidebar-foreground/60">
+                Módulos
+              </SidebarGroupLabel>
+            )}
+            <SidebarGroupContent className={cn("px-2", isCollapsed && "px-1")}>
+              <SidebarMenu className="gap-0.5">
+                {menu.map((modulo) => (
+                  <Collapsible key={modulo.modulo} defaultOpen={true} className="group/collapsible">
+                    <SidebarMenuItem>
+                      <CollapsibleTrigger asChild>
+                        <SidebarMenuButton
+                          tooltip={modulo.modulo}
+                          className={cn(
+                            "h-10 rounded-md transition-all duration-200",
+                            "hover:bg-sidebar-accent/50 text-sidebar-foreground/70 hover:text-sidebar-foreground",
+                            isCollapsed && "justify-center px-0",
+                          )}
+                        >
+                          <Folder className={cn("flex-shrink-0", isCollapsed ? "h-5 w-5" : "h-4 w-4")} />
+                          {!isCollapsed && (
+                            <>
+                              <span className="flex-1 truncate text-sm ml-2">{modulo.modulo}</span>
+                              <ChevronDown className="ml-auto h-4 w-4 transition-transform group-data-[state=open]/collapsible:rotate-180" />
+                            </>
+                          )}
+                        </SidebarMenuButton>
+                      </CollapsibleTrigger>
+
+                      {!isCollapsed && (
+                        <CollapsibleContent>
+                          <SidebarMenuSub className="ml-2 border-l border-sidebar-border/50">
+                            {modulo.views.map((view) => {
+                              const isActive = pathname === view.route
+                              return (
+                                <SidebarMenuSubItem key={view.route}>
+                                  <SidebarMenuSubButton
+                                    asChild
+                                    isActive={isActive}
+                                    className={cn(
+                                      "h-9 text-xs rounded-md transition-all duration-200",
+                                      isActive
+                                        ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                                        : "hover:bg-sidebar-accent/50",
+                                    )}
+                                  >
+                                    <Link href={view.route}>{view.name}</Link>
+                                  </SidebarMenuSubButton>
+                                </SidebarMenuSubItem>
+                              )
+                            })}
+                          </SidebarMenuSub>
+                        </CollapsibleContent>
                       )}
-                    >
-                      <Link href={item.url} className={cn(
-                        "flex items-center w-full",
-                        isCollapsed ? "justify-center" : "gap-3"
-                      )}>
-                        <item.icon className={cn(
-                          "flex-shrink-0",
-                          isCollapsed ? "h-5 w-5" : "h-4 w-4"
-                        )} />
-                        {!isCollapsed && (
-                          <>
-                            <span className="flex-1 truncate text-sm">
-                              {item.title}
-                            </span>
-                            {item.badge && (
-                              <Badge variant="secondary" className="ml-auto h-5 px-2 text-xs font-semibold">
-                                {item.badge}
-                              </Badge>
-                            )}
-                          </>
-                        )}
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                )
-              })}
+                    </SidebarMenuItem>
+                  </Collapsible>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
+
+        {/* Perfil y Configuración - Siempre visibles */}
+        <SidebarGroup>
+          {!isCollapsed && (
+            <SidebarGroupLabel className="px-3 text-xs font-semibold uppercase tracking-wider text-sidebar-foreground/60">
+              Cuenta
+            </SidebarGroupLabel>
+          )}
+          <SidebarGroupContent className={cn("px-2", isCollapsed && "px-1")}>
+            <SidebarMenu className="gap-0.5">
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  isActive={pathname === "/perfil"}
+                  tooltip="Perfil"
+                  className={cn(
+                    "group relative h-10 transition-all duration-200 rounded-md",
+                    pathname === "/perfil"
+                      ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                      : "hover:bg-sidebar-accent/50 text-sidebar-foreground/70 hover:text-sidebar-foreground",
+                    isCollapsed && "justify-center px-0",
+                  )}
+                >
+                  <Link href="/perfil" className="flex items-center w-full">
+                    <User className={cn("flex-shrink-0", isCollapsed ? "h-5 w-5" : "h-4 w-4")} />
+                    {!isCollapsed && <span className="flex-1 truncate text-sm ml-3">Perfil</span>}
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  isActive={pathname === "/configuracion" || pathname.startsWith("/configuracion/")}
+                  tooltip="Configuración"
+                  className={cn(
+                    "group relative h-10 transition-all duration-200 rounded-md",
+                    pathname === "/configuracion" || pathname.startsWith("/configuracion/")
+                      ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                      : "hover:bg-sidebar-accent/50 text-sidebar-foreground/70 hover:text-sidebar-foreground",
+                    isCollapsed && "justify-center px-0",
+                  )}
+                >
+                  <Link href="/configuracion" className="flex items-center w-full">
+                    <Settings className={cn("flex-shrink-0", isCollapsed ? "h-5 w-5" : "h-4 w-4")} />
+                    {!isCollapsed && <span className="flex-1 truncate text-sm ml-3">Configuración</span>}
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
 
       {/* FOOTER / USUARIO */}
-      <SidebarFooter className={cn(
-        "mt-auto border-t border-sidebar-border/50",
-        isCollapsed ? "p-1" : "p-2"
-      )}>
+      <SidebarFooter className={cn("mt-auto border-t border-sidebar-border/50", isCollapsed ? "p-1" : "p-2")}>
         <SidebarMenu>
           <SidebarMenuItem>
             <DropdownMenu>
@@ -185,23 +255,22 @@ export function AppSidebar() {
                   size="lg"
                   className={cn(
                     "group h-12 transition-all duration-200 hover:bg-sidebar-accent data-[state=open]:bg-sidebar-accent rounded-md",
-                    isCollapsed && "justify-center px-0"
+                    isCollapsed && "justify-center px-0",
                   )}
                 >
-                  <Avatar className={cn(
-                    "rounded-lg border border-sidebar-border/50",
-                    isCollapsed ? "h-8 w-8" : "h-8 w-8"
-                  )}>
+                  <Avatar className="rounded-lg border border-sidebar-border/50 h-8 w-8">
                     <AvatarImage src="/diverse-user-avatars.png" alt="Usuario" />
                     <AvatarFallback className="rounded-lg bg-sidebar-accent text-xs font-semibold text-sidebar-foreground">
-                      {initials}
+                      {userInfo.initials}
                     </AvatarFallback>
                   </Avatar>
                   {!isCollapsed && (
                     <>
                       <div className="grid flex-1 text-left text-sm leading-tight min-w-0">
-                        <span className="truncate font-semibold text-sidebar-foreground text-sm">{displayName}</span>
-                        <span className="truncate text-xs text-sidebar-foreground/60">{userEmail ?? ""}</span>
+                        <span className="truncate font-semibold text-sidebar-foreground text-sm">
+                          {userInfo.email.split("@")[0]}
+                        </span>
+                        <span className="truncate text-xs text-sidebar-foreground/60">{userInfo.email}</span>
                       </div>
                       <ChevronRight className="ml-auto h-4 w-4 text-sidebar-foreground/60 transition-transform group-data-[state=open]:rotate-90 flex-shrink-0" />
                     </>
@@ -211,17 +280,11 @@ export function AppSidebar() {
               <DropdownMenuContent className="w-56" align="end" side={isCollapsed ? "right" : "bottom"} sideOffset={8}>
                 <DropdownMenuLabel className="font-normal">
                   <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-semibold leading-none">{displayName}</p>
-                    <p className="text-xs leading-none text-muted-foreground">{userEmail ?? ""}</p>
+                    <p className="text-sm font-semibold leading-none">{userInfo.email.split("@")[0]}</p>
+                    <p className="text-xs leading-none text-muted-foreground">{userInfo.email}</p>
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                  <Link href="/perfil" className="cursor-pointer">
-                    <User className="mr-2 h-4 w-4" />
-                    <span>Mi Perfil</span>
-                  </Link>
-                </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={handleLogout}
                   className="cursor-pointer text-destructive focus:text-destructive"

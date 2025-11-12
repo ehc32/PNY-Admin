@@ -1,17 +1,42 @@
-import { redirect } from "next/navigation";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+"use client"
 
-export default async function Home() {
-  const supabase = await createSupabaseServerClient();
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
+import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
+import { useAuth } from "@/lib/auth-context"
+import { Spinner } from "@/components/ui/spinner"
 
-  // Si hay sesión activa, redirigir al dashboard
-  if (session) {
-    redirect("/dashboard");
+export default function Home() {
+  const router = useRouter()
+  const { token, loading } = useAuth()
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  useEffect(() => {
+    if (!mounted) return
+
+    if (loading) return
+
+    if (token) {
+      router.replace("/landing")
+    } else {
+      router.replace("/solicitud-mantenimiento")
+    }
+  }, [token, loading, mounted, router])
+
+  if (!mounted || loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-muted">
+        <Spinner />
+      </div>
+    )
   }
-  
-  // Si no hay sesión, redirigir al login
-  redirect("/login");
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-muted">
+      <Spinner />
+    </div>
+  )
 }

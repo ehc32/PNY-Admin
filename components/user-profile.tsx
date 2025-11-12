@@ -1,9 +1,10 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import React from "react"
 import { useRouter } from "next/navigation"
 import { User, Settings, LogOut, ChevronRight } from "lucide-react"
-import { createSupabaseBrowserClient } from "@/lib/supabase/client"
+import { useAuth } from "@/lib/auth-context"
+import { getUserInfoFromToken } from "@/lib/jwt-utils"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import {
@@ -15,7 +16,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { cn } from "@/lib/utils"
-import type { User as SupabaseUser } from "@supabase/supabase-js"
 
 interface UserProfileProps {
   collapsed?: boolean
@@ -23,22 +23,10 @@ interface UserProfileProps {
 
 export function UserProfile({ collapsed }: UserProfileProps) {
   const router = useRouter()
-  const [user, setUser] = useState<SupabaseUser | null>(null)
-
-  useEffect(() => {
-    const getUser = async () => {
-      const supabase = createSupabaseBrowserClient()
-      const {
-        data: { session },
-      } = await supabase.auth.getSession()
-      setUser(session?.user || null)
-    }
-    getUser()
-  }, [])
+  const { token, logout, role } = useAuth()
 
   const onLogout = async () => {
-    const supabase = createSupabaseBrowserClient()
-    await supabase.auth.signOut()
+    logout()
     router.replace("/login")
   }
 
@@ -46,9 +34,16 @@ export function UserProfile({ collapsed }: UserProfileProps) {
     router.push("/perfil")
   }
 
-  if (!user) return null
+  if (!token) return null
 
-  const initials = user.email?.split("@")[0].slice(0, 2).toUpperCase() || "AD"
+  // Obtener información del usuario desde el token
+  const userInfo = token ? getUserInfoFromToken (token) : null
+  const user = {
+    name: userInfo?.name || "Administrador",
+    email: userInfo?.email || "admin@sistema.com"
+  }
+
+  const initials = user.name?.slice(0, 2).toUpperCase() || "AD"
 
   return (
     <DropdownMenu>
@@ -67,8 +62,8 @@ export function UserProfile({ collapsed }: UserProfileProps) {
           </Avatar>
           {!collapsed && (
             <div className="flex flex-col items-start min-w-0 flex-1">
-              <span className="text-sm font-semibold truncate max-w-[140px] text-foreground">Administrador</span>
-              <span className="text-xs text-muted-foreground/80 truncate max-w-[140px] font-medium">{user.email}</span>
+              <span className="text-sm font-semibold truncate max-w-[140px] text-foreground">{user.name || "Administrador"}</span>
+              <span className="text-xs text-muted-foreground/70 truncate max-w-[140px] font-medium">{user.email}</span>
             </div>
           )}
           {!collapsed && (
