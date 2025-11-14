@@ -1,4 +1,4 @@
-const API_BASE_URL = "https://stingray-app-e496q.ondigitalocean.app"
+import { createApiUrl, createAuthHeaders } from "./api-config"
 
 export interface Role {
   _id: string
@@ -23,13 +23,9 @@ export interface UpdateRoleDto extends Partial<CreateRoleDto> {
 
 // Obtener todos los roles
 export async function obtenerRoles(token: string): Promise<Role[]> {
-  const response = await fetch(`${API_BASE_URL}/rol`, {
+  const response = await fetch(createApiUrl("/rol"), {
     method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-      Accept: "application/json",
-      Authorization: `Bearer ${token}`,
-    },
+    headers: createAuthHeaders(token),
   })
 
   if (!response.ok) {
@@ -43,13 +39,9 @@ export async function obtenerRoles(token: string): Promise<Role[]> {
 
 // Obtener un rol por ID
 export async function obtenerRolPorId(token: string, id: string): Promise<Role> {
-  const response = await fetch(`${API_BASE_URL}/rol/${id}`, {
+  const response = await fetch(createApiUrl(`/rol/${id}`), {
     method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-      Accept: "application/json",
-      Authorization: `Bearer ${token}`,
-    },
+    headers: createAuthHeaders(token),
   })
 
   if (!response.ok) {
@@ -61,15 +53,75 @@ export async function obtenerRolPorId(token: string, id: string): Promise<Role> 
   return data.result || data
 }
 
+// Crear un nuevo rol
+export async function crearRol(token: string, roleData: CreateRoleDto): Promise<Role> {
+  const response = await fetch(createApiUrl("/rol"), {
+    method: "POST",
+    headers: createAuthHeaders(token),
+    body: JSON.stringify(roleData),
+  })
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}))
+    throw new Error(error.message || "Error al crear rol")
+  }
+
+  const data = await response.json()
+  return data.result || data
+}
+
+// Actualizar un rol
+export async function actualizarRol(token: string, id: string, roleData: UpdateRoleDto): Promise<Role> {
+  const response = await fetch(createApiUrl(`/rol/${id}`), {
+    method: "PUT",
+    headers: createAuthHeaders(token),
+    body: JSON.stringify(roleData),
+  })
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}))
+    throw new Error(error.message || "Error al actualizar rol")
+  }
+
+  const data = await response.json()
+  return data.result || data
+}
+
+// Eliminar un rol
+export async function eliminarRol(token: string, id: string): Promise<void> {
+  const response = await fetch(createApiUrl(`/rol/${id}`), {
+    method: "DELETE",
+    headers: createAuthHeaders(token),
+  })
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}))
+    throw new Error(error.message || "Error al eliminar rol")
+  }
+}
+
+// Cambiar estado de un rol
+export async function cambiarEstadoRol(token: string, id: string, nuevoEstado: boolean): Promise<Role> {
+  const response = await fetch(createApiUrl(`/rol/${id}`), {
+    method: "PATCH",
+    headers: createAuthHeaders(token),
+    body: JSON.stringify({ state: nuevoEstado }),
+  })
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}))
+    throw new Error(error.message || "Error al cambiar estado del rol")
+  }
+
+  const data = await response.json()
+  return data.result || data
+}
+
 // Asignar vistas a un rol
 export async function asignarVistasARol(token: string, roleId: string, viewIds: string[]): Promise<Role> {
-  const response = await fetch(`${API_BASE_URL}/rol/${roleId}`, {
+  const response = await fetch(createApiUrl(`/rol/${roleId}`), {
     method: "PATCH",
-    headers: {
-      "Content-Type": "application/json",
-      Accept: "application/json",
-      Authorization: `Bearer ${token}`,
-    },
+    headers: createAuthHeaders(token),
     body: JSON.stringify({ views: viewIds }),
   })
 

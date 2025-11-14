@@ -1,27 +1,23 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Shield, ArrowLeft, Plus, Edit, Trash2, Eye, EyeOff, UserCheck } from "lucide-react"
+import { Shield, ArrowLeft, Plus, Edit, Trash2, Eye, EyeOff } from "lucide-react"
 import Link from "next/link"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { useAuth } from "@/lib/auth-context"
-import { obtenerVistas, obtenerModulos, eliminarVista, cambiarEstadoVista, type View, type Modulo } from "@/lib/api/views-service"
+import { obtenerRoles, eliminarRol, cambiarEstadoRol, type Role } from "@/lib/api/roles-service"
 import { GenericTable } from "@/components/generic-table"
 import { toast } from "sonner"
-import { CreateViewModal } from "@/components/create-view-modal"
-import { AssignPermissionsModal } from "@/components/assign-permissions-modal"
+import { CreateRoleModal } from "@/components/create-role-modal"
 
-export default function VistasPage() {
+export default function RolesPage() {
   const { token } = useAuth()
-  const [vistas, setVistas] = useState<View[]>([])
-  const [modulos, setModulos] = useState<Modulo[]>([])
+  const [roles, setRoles] = useState<Role[]>([])
   const [loading, setLoading] = useState(true)
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
-  const [editingView, setEditingView] = useState<View | null>(null)
-  const [isAssignModalOpen, setIsAssignModalOpen] = useState(false)
-  const [selectedView, setSelectedView] = useState<View | null>(null)
+  const [editingRole, setEditingRole] = useState<Role | null>(null)
 
   useEffect(() => {
     if (token) {
@@ -34,22 +30,11 @@ export default function VistasPage() {
     
     setLoading(true)
     try {
-      const [vistasData, modulosData] = await Promise.all([
-        obtenerVistas(token),
-        obtenerModulos(token)
-      ])
-      
-      // Mapear vistas con información del módulo
-      const vistasConModulo = vistasData.map(vista => ({
-        ...vista,
-        modulo: modulosData.find(m => m._id === vista.moduloId)
-      }))
-      
-      setVistas(vistasConModulo)
-      setModulos(modulosData)
+      const rolesData = await obtenerRoles(token)
+      setRoles(rolesData)
     } catch (error) {
       console.error("Error al cargar datos:", error)
-      toast.error("Error al cargar las vistas")
+      toast.error("Error al cargar los roles")
     } finally {
       setLoading(false)
     }
@@ -58,15 +43,15 @@ export default function VistasPage() {
   const handleEliminar = async (id: string) => {
     if (!token) return
     
-    if (!confirm("¿Estás seguro de que deseas eliminar esta vista?")) return
+    if (!confirm("¿Estás seguro de que deseas eliminar este rol?")) return
     
     try {
-      await eliminarVista(token, id)
-      toast.success("Vista eliminada correctamente")
+      await eliminarRol(token, id)
+      toast.success("Rol eliminado correctamente")
       cargarDatos()
     } catch (error) {
-      console.error("Error al eliminar vista:", error)
-      toast.error("Error al eliminar la vista")
+      console.error("Error al eliminar rol:", error)
+      toast.error("Error al eliminar el rol")
     }
   }
 
@@ -74,23 +59,23 @@ export default function VistasPage() {
     if (!token) return
     
     try {
-      await cambiarEstadoVista(token, id, nuevoEstado)
-      toast.success(`Vista ${nuevoEstado ? 'activada' : 'desactivada'} correctamente`)
+      await cambiarEstadoRol(token, id, nuevoEstado)
+      toast.success(`Rol ${nuevoEstado ? 'activado' : 'desactivado'} correctamente`)
       cargarDatos()
     } catch (error) {
       console.error("Error al cambiar estado:", error)
-      toast.error("Error al cambiar el estado de la vista")
+      toast.error("Error al cambiar el estado del rol")
     }
   }
 
-  const handleEdit = (vista: View) => {
-    setEditingView(vista)
+  const handleEdit = (role: Role) => {
+    setEditingRole(role)
     setIsCreateModalOpen(true)
   }
 
   const handleCloseModal = () => {
     setIsCreateModalOpen(false)
-    setEditingView(null)
+    setEditingRole(null)
   }
 
   const handleSuccess = () => {
@@ -98,90 +83,67 @@ export default function VistasPage() {
     handleCloseModal()
   }
 
-  const handleAssignPermissions = (vista: View) => {
-    setSelectedView(vista)
-    setIsAssignModalOpen(true)
-  }
-
-  const handleCloseAssignModal = () => {
-    setIsAssignModalOpen(false)
-    setSelectedView(null)
-  }
-
-  const handleAssignSuccess = () => {
-    toast.success("Permisos asignados correctamente")
-    handleCloseAssignModal()
-  }
-
   const columns = [
     {
       id: "name",
       label: "Nombre",
-      accessor: "name" as keyof View,
+      accessor: "name" as keyof Role,
       sortable: true,
-      render: (value: any, vista: View) => (
+      render: (value: any, role: Role) => (
         <div>
-          <div className="font-medium">{vista.name}</div>
-          <div className="text-sm text-muted-foreground">{vista.description}</div>
+          <div className="font-medium">{role.name}</div>
+          <div className="text-sm text-muted-foreground">{role.description}</div>
         </div>
       )
     },
     {
-      id: "route",
-      label: "Ruta",
-      accessor: "route" as keyof View,
-      sortable: true,
-      render: (value: any, vista: View) => (
-        <code className="text-sm bg-muted px-2 py-1 rounded">{vista.route}</code>
-      )
-    },
-    {
-      id: "modulo",
-      label: "Módulo",
-      accessor: "moduloId" as keyof View,
-      render: (value: any, vista: View) => (
-        <Badge variant="secondary">
-          {vista.modulo?.name || "Sin módulo"}
+      id: "views",
+      label: "Vistas Asignadas",
+      accessor: "views" as keyof Role,
+      render: (value: any, role: Role) => (
+        <Badge variant="outline">
+          {role.views?.length || 0} vistas
         </Badge>
       )
     },
     {
       id: "state",
       label: "Estado",
-      accessor: "state" as keyof View,
-      render: (value: any, vista: View) => (
-        <Badge variant={vista.state ? "default" : "secondary"}>
-          {vista.state ? "Activo" : "Inactivo"}
+      accessor: "state" as keyof Role,
+      render: (value: any, role: Role) => (
+        <Badge variant={role.state ? "default" : "secondary"}>
+          {role.state ? "Activo" : "Inactivo"}
         </Badge>
+      )
+    },
+    {
+      id: "createdAt",
+      label: "Fecha de Creación",
+      accessor: "createdAt" as keyof Role,
+      render: (value: any, role: Role) => (
+        <span className="text-sm text-muted-foreground">
+          {role.createdAt ? new Date(role.createdAt).toLocaleDateString() : "N/A"}
+        </span>
       )
     },
     {
       id: "actions",
       label: "Acciones",
-      accessor: "_id" as keyof View,
-      render: (value: any, vista: View) => (
+      accessor: "_id" as keyof Role,
+      render: (value: any, role: Role) => (
         <div className="flex items-center gap-2">
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => handleAssignPermissions(vista)}
-            title="Asignar a Roles"
-            className="text-blue-600 hover:text-blue-700"
+            onClick={() => handleCambiarEstado(role._id, !role.state)}
+            title={role.state ? "Desactivar" : "Activar"}
           >
-            <UserCheck className="h-4 w-4" />
+            {role.state ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
           </Button>
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => handleCambiarEstado(vista._id, !vista.state)}
-            title={vista.state ? "Desactivar" : "Activar"}
-          >
-            {vista.state ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => handleEdit(vista)}
+            onClick={() => handleEdit(role)}
             title="Editar"
           >
             <Edit className="h-4 w-4" />
@@ -189,7 +151,7 @@ export default function VistasPage() {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => handleEliminar(vista._id)}
+            onClick={() => handleEliminar(role._id)}
             className="text-destructive hover:text-destructive"
             title="Eliminar"
           >
@@ -213,28 +175,28 @@ export default function VistasPage() {
           <div className="flex items-center gap-3">
             <Shield className="h-8 w-8 text-primary" />
             <div>
-              <h1 className="text-3xl font-bold">Gestión de Vistas</h1>
-              <p className="text-muted-foreground">Administra las vistas y rutas del sistema</p>
+              <h1 className="text-3xl font-bold">Gestión de Roles</h1>
+              <p className="text-muted-foreground">Administra los roles del sistema</p>
             </div>
           </div>
         </div>
         <Button onClick={() => setIsCreateModalOpen(true)}>
           <Plus className="h-4 w-4 mr-2" />
-          Nueva Vista
+          Nuevo Rol
         </Button>
       </div>
 
       {/* Content */}
       <Card>
         <CardHeader>
-          <CardTitle>Vistas del Sistema</CardTitle>
+          <CardTitle>Roles del Sistema</CardTitle>
           <CardDescription>
-            Lista de todas las vistas disponibles en el sistema
+            Lista de todos los roles disponibles en el sistema
           </CardDescription>
         </CardHeader>
         <CardContent>
           <GenericTable
-            data={vistas}
+            data={roles}
             columns={columns}
             isLoading={loading}
             showActions={false}
@@ -242,21 +204,12 @@ export default function VistasPage() {
         </CardContent>
       </Card>
 
-      {/* Modal para crear/editar vista */}
-      <CreateViewModal
+      {/* Modal para crear/editar rol */}
+      <CreateRoleModal
         isOpen={isCreateModalOpen}
         onClose={handleCloseModal}
         onSuccess={handleSuccess}
-        modulos={modulos}
-        editingView={editingView}
-      />
-
-      {/* Modal para asignar permisos */}
-      <AssignPermissionsModal
-        isOpen={isAssignModalOpen}
-        onClose={handleCloseAssignModal}
-        onSuccess={handleAssignSuccess}
-        selectedView={selectedView}
+        editingRole={editingRole}
       />
     </div>
   )

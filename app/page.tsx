@@ -19,12 +19,9 @@ export default function Home() {
 
     if (loading) return
 
-    if (token) {
-      router.replace("/landing")
-    } else {
-      router.replace("/solicitud-mantenimiento")
-    }
-  }, [token, loading, mounted, router])
+    // Siempre redirigir a mantenimiento (página pública)
+    router.replace("/mantenimiento")
+  }, [loading, mounted, router])
 
   if (!mounted || loading) {
     return (

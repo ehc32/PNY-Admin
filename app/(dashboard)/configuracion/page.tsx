@@ -1,34 +1,34 @@
 "use client"
 
-import { ChevronRight, Settings2, FileText, Users, Shield, MapPin, Folder } from "lucide-react"
+import { ChevronRight, Settings2, FileText, Users, Shield, MapPin, Folder, Package } from "lucide-react"
 import Link from "next/link"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 
 export default function ConfiguracionPage() {
   const parametrizacionItems = [
     {
-      title: "Gestión de vistas",
-      description: "Administra las vistas y rutas del sistema",
+      title: "Gestión de Roles",
+      description: "Administra los roles del sistema",
       href: "/configuracion/parametrizacion/roles",
       icon: Shield,
     },
     {
-      title: "Asignación de permisos",
-      description: "Asigna permisos a usuarios y roles",
-      href: "/configuracion/parametrizacion/permisos",
-      icon: Users,
-    },
-    {
-      title: "Gestión de módulos",
-      description: "Administra los módulos del sistema",
-      href: "/configuracion/parametrizacion/rutas",
+      title: "Gestión de Vistas",
+      description: "Administra las vistas y rutas del sistema",
+      href: "/configuracion/parametrizacion/vistas",
       icon: MapPin,
     },
     {
-      title: "Gestión de Ambientes",
-      description: "Administra los ambientes del sistema",
-      href: "/configuracion/parametrizacion/ambientes",
-      icon: Settings2,
+      title: "Gestión de Módulos",
+      description: "Administra los módulos del sistema",
+      href: "/configuracion/parametrizacion/modulos",
+      icon: Folder,
+    },
+    {
+      title: "Gestión de Ubicaciones",
+      description: "Administra las ubicaciones del sistema",
+      href: "/configuracion/parametrizacion/ubicaciones",
+      icon: MapPin,
     },
     {
       title: "Configuración del Sistema",
@@ -37,6 +37,7 @@ export default function ConfiguracionPage() {
       icon: Settings2,
     },
   ]
+
 
   const registrosItems = [
     {
@@ -94,6 +95,7 @@ export default function ConfiguracionPage() {
           })}
         </div>
       </div>
+
 
       {/* Registros del sistema Section */}
       <div className="space-y-4">
