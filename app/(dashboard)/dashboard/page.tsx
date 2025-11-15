@@ -1,229 +1,326 @@
 "use client"
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Activity, TrendingUp, Users, DollarSign, ArrowUpRight, ArrowDownRight } from "lucide-react"
-import { Line, LineChart, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Area, AreaChart } from "recharts"
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
-
-// Data de ejemplo para gráficos
-const revenueData = [
-  { time: "00:00", value: 4000 },
-  { time: "04:00", value: 3000 },
-  { time: "08:00", value: 5000 },
-  { time: "12:00", value: 4500 },
-  { time: "16:00", value: 6000 },
-  { time: "20:00", value: 5500 },
-  { time: "24:00", value: 7000 },
-]
-
-const trafficData = [
-  { time: "00:00", visitors: 2400, pageviews: 4000 },
-  { time: "04:00", visitors: 1398, pageviews: 3000 },
-  { time: "08:00", visitors: 3800, pageviews: 5000 },
-  { time: "12:00", visitors: 3908, pageviews: 4500 },
-  { time: "16:00", visitors: 4800, pageviews: 6000 },
-  { time: "20:00", visitors: 3800, pageviews: 5500 },
-  { time: "24:00", visitors: 4300, pageviews: 7000 },
-]
+import Link from "next/link"
+import Image from "next/image"
+import { ChevronRight, Mouse as House } from 'lucide-react'
 
 export default function DashboardPage() {
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b border-border bg-card">
-        <div className="flex h-16 items-center px-6">
-          <h1 className="text-2xl font-semibold text-foreground">Dashboard</h1>
-          <div className="ml-auto flex items-center gap-4">
-            <select className="rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground">
-              <option>Last 12 hours</option>
-              <option>Last 24 hours</option>
-              <option>Last 7 days</option>
-            </select>
+      {/* Header Section */}
+      <div className="bg-card border-b border-border">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          {/* Breadcrumb */}
+          <nav className="flex items-center gap-2 mb-4">
+            <Link href="/" className="text-muted-foreground hover:text-foreground">
+              <House className="w-4 h-4" />
+            </Link>
+            <span className="text-muted-foreground">/</span>
+            <span className="text-muted-foreground">Inicio</span>
+          </nav>
+
+          {/* Title */}
+          <h1 className="text-3xl font-bold text-foreground">Administrador</h1>
+        </div>
+      </div>
+
+      {/* Navigation Tabs */}
+      <div className="bg-card border-b border-border">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex gap-8 overflow-x-auto">
+            <Link href="/dashboard" className="py-4 px-1 border-b-2 border-primary font-medium text-foreground text-sm">
+              Home
+            </Link>
+            <Link href="/dashboard/usuario" className="py-4 px-1 border-b-2 border-transparent font-medium text-muted-foreground hover:text-foreground text-sm hover:border-border">
+              Usuario
+            </Link>
+            <Link href="/dashboard/inventario" className="py-4 px-1 border-b-2 border-transparent font-medium text-muted-foreground hover:text-foreground text-sm hover:border-border">
+              Inventario
+            </Link>
+            <Link href="/dashboard/maquinas" className="py-4 px-1 border-b-2 border-transparent font-medium text-muted-foreground hover:text-foreground text-sm hover:border-border">
+              Máquinas
+            </Link>
+            <Link href="/dashboard/mantenimientos" className="py-4 px-1 border-b-2 border-transparent font-medium text-muted-foreground hover:text-foreground text-sm hover:border-border">
+              Mantenimientos
+            </Link>
+            <Link href="/dashboard/ajustes" className="py-4 px-1 border-b-2 border-transparent font-medium text-muted-foreground hover:text-foreground text-sm hover:border-border">
+              Ajustes
+            </Link>
           </div>
         </div>
-      </header>
+      </div>
 
-      {/* Main Content */}
-      <main className="p-6">
-        {/* Stats Grid */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-6">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Total Revenue</CardTitle>
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-foreground">$45,231.89</div>
-              <p className="flex items-center text-xs text-muted-foreground mt-1">
-                <ArrowUpRight className="h-4 w-4 text-emerald-500 mr-1" />
-                <span className="text-emerald-500">+20.1%</span>
-                <span className="ml-1">from last month</span>
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Active Users</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-foreground">+2,350</div>
-              <p className="flex items-center text-xs text-muted-foreground mt-1">
-                <ArrowUpRight className="h-4 w-4 text-emerald-500 mr-1" />
-                <span className="text-emerald-500">+180.1%</span>
-                <span className="ml-1">from last month</span>
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Conversion Rate</CardTitle>
-              <TrendingUp className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-foreground">12.5%</div>
-              <p className="flex items-center text-xs text-muted-foreground mt-1">
-                <ArrowUpRight className="h-4 w-4 text-emerald-500 mr-1" />
-                <span className="text-emerald-500">+4.3%</span>
-                <span className="ml-1">from last month</span>
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Response Time</CardTitle>
-              <Activity className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-foreground">573ms</div>
-              <p className="flex items-center text-xs text-muted-foreground mt-1">
-                <ArrowDownRight className="h-4 w-4 text-red-500 mr-1" />
-                <span className="text-red-500">+12.3%</span>
-                <span className="ml-1">from last month</span>
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Charts Grid */}
-        <div className="grid gap-4 md:grid-cols-2 mb-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-foreground">Revenue Overview</CardTitle>
-              <CardDescription>Daily revenue for the last 24 hours</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ChartContainer
-                config={{
-                  value: {
-                    label: "Revenue",
-                    color: "hsl(var(--chart-1))",
-                  },
-                }}
-                className="h-[300px]"
-              >
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={revenueData}>
-                    <defs>
-                      <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="hsl(var(--chart-1))" stopOpacity={0.3} />
-                        <stop offset="95%" stopColor="hsl(var(--chart-1))" stopOpacity={0} />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                    <XAxis dataKey="time" stroke="hsl(var(--muted-foreground))" fontSize={12} />
-                    <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
-                    <ChartTooltip content={<ChartTooltipContent />} />
-                    <Area
-                      type="monotone"
-                      dataKey="value"
-                      stroke="hsl(var(--chart-1))"
-                      fill="url(#colorValue)"
-                      strokeWidth={2}
+      {/* Main Content - Bootstrap-like Layout */}
+      <section className="bg-background py-8">
+        <div className="w-full px-4">
+          <div className="flex flex-col lg:flex-row gap-4 items-start mb-4">
+            {/* Left Column - What do you want to do? */}
+            <div className="w-full lg:w-5/12 xl:w-5/12">
+              <div className="bg-card border border-border rounded-2xl shadow-sm p-4 h-full">
+                <h2 className="text-2xl font-bold text-card-foreground mb-3">
+                  ¿Qué quieres hacer hoy?
+                </h2>
+                <p className="text-muted-foreground mb-4 text-sm leading-relaxed">
+                  Accede directo a los módulos que usas a diario: gestiona trámites, 
+                  administra usuarios o ajusta parámetros.
+                </p>
+                <div className="flex justify-center">
+                  <div className="relative mx-auto w-80 h-80">
+                    <Image
+                      src="/Listas/options.svg"
+                      alt="¿Qué quieres hacer hoy?"
+                      width={320}
+                      height={320}
+                      className="object-contain w-full h-full"
+                      priority
                     />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </ChartContainer>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-foreground">Traffic Analysis</CardTitle>
-              <CardDescription>Visitors and pageviews over time</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ChartContainer
-                config={{
-                  visitors: {
-                    label: "Visitors",
-                    color: "hsl(var(--chart-2))",
-                  },
-                  pageviews: {
-                    label: "Pageviews",
-                    color: "hsl(var(--chart-3))",
-                  },
-                }}
-                className="h-[300px]"
-              >
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={trafficData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                    <XAxis dataKey="time" stroke="hsl(var(--muted-foreground))" fontSize={12} />
-                    <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
-                    <ChartTooltip content={<ChartTooltipContent />} />
-                    <Line type="monotone" dataKey="visitors" stroke="hsl(var(--chart-2))" strokeWidth={2} dot={false} />
-                    <Line
-                      type="monotone"
-                      dataKey="pageviews"
-                      stroke="hsl(var(--chart-3))"
-                      strokeWidth={2}
-                      dot={false}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
-              </ChartContainer>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Recent Activity */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-foreground">Recent Activity</CardTitle>
-            <CardDescription>Latest events and notifications</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {[
-                { type: "success", message: "New user registration", time: "2 minutes ago" },
-                { type: "info", message: "Payment processed successfully", time: "15 minutes ago" },
-                { type: "warning", message: "API rate limit approaching", time: "1 hour ago" },
-                { type: "success", message: "Deployment completed", time: "2 hours ago" },
-              ].map((activity, i) => (
-                <div key={i} className="flex items-center gap-4 border-b border-border pb-4 last:border-0 last:pb-0">
-                  <div
-                    className={`h-2 w-2 rounded-full ${
-                      activity.type === "success"
-                        ? "bg-emerald-500"
-                        : activity.type === "info"
-                          ? "bg-blue-500"
-                          : "bg-amber-500"
-                    }`}
-                  />
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-foreground">{activity.message}</p>
-                    <p className="text-xs text-muted-foreground">{activity.time}</p>
                   </div>
                 </div>
-              ))}
+              </div>
             </div>
-          </CardContent>
-        </Card>
-      </main>
+
+            {/* Right Column - Operations and User Management */}
+            <div className="w-full lg:w-7/12 xl:w-7/12">
+              <div className="flex flex-col gap-4">
+              {/* Operación Diaria Section */}
+              <div className="bg-card border border-border rounded-4xl shadow-sm p-6">
+                <div className="mb-6">
+                  <h3 className="text-xl font-bold text-card-foreground mb-2">Operación diaria</h3>
+                  <p className="text-muted-foreground text-sm">
+                    Accesos rápidos para mantener los procesos al día.
+                  </p>
+                </div>
+
+                {/* Operations Grid - 2 columns */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {/* Bandeja de pendientes */}
+                  <Link href="/dashboard/bandeja-pendientes">
+                    <div className="group hover:shadow-md transition-all duration-300 cursor-pointer bg-card border border-border rounded-2xl h-full hover:border-muted p-4 flex gap-4 items-start">
+                      <div className="flex-shrink-0">
+                        <Image
+                          src="/Listas/options.svg"
+                          alt="Bandeja de pendientes"
+                          width={70}
+                          height={70}
+                          className="opacity-70"
+                        />
+                      </div>
+                      <div className="flex-1 flex flex-col justify-between">
+                        <div>
+                          <h4 className="font-semibold text-card-foreground text-base mb-1">
+                            Bandeja de pendientes
+                          </h4>
+                          <p className="text-muted-foreground text-sm">
+                            Aprueba o rechaza las solicitudes pendientes.
+                          </p>
+                        </div>
+                        <div className="flex justify-end pt-2">
+                          <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
+                        </div>
+                      </div>
+                    </div>
+                  </Link>
+
+                  {/* Archivos */}
+                  <Link href="/dashboard/archivos">
+                    <div className="group hover:shadow-md transition-all duration-300 cursor-pointer bg-card border border-border rounded-2xl h-full hover:border-muted p-4 flex gap-4 items-start">
+                      <div className="flex-shrink-0">
+                        <Image
+                          src="/Listas/options.svg"
+                          alt="Archivos"
+                          width={70}
+                          height={70}
+                          className="opacity-70"
+                        />
+                      </div>
+                      <div className="flex-1 flex flex-col justify-between">
+                        <div>
+                          <h4 className="font-semibold text-card-foreground text-base mb-1">
+                            Archivos
+                          </h4>
+                          <p className="text-muted-foreground text-sm">
+                            Consulta y organiza archivos del repositorio seguro.
+                          </p>
+                        </div>
+                        <div className="flex justify-end pt-2">
+                          <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
+                        </div>
+                      </div>
+                    </div>
+                  </Link>
+
+                  {/* Mensajes */}
+                  <Link href="/dashboard/mensajes" className="sm:col-span-2">
+                    <div className="group hover:shadow-md transition-all duration-300 cursor-pointer bg-card border border-border rounded-2xl h-full hover:border-muted p-4 flex gap-4 items-start">
+                      <div className="flex-shrink-0">
+                        <Image
+                          src="/Listas/options.svg"
+                          alt="Mensajes"
+                          width={70}
+                          height={70}
+                          className="opacity-70"
+                        />
+                      </div>
+                      <div className="flex-1 flex flex-col justify-between">
+                        <div>
+                          <h4 className="font-semibold text-card-foreground text-base mb-1">
+                            Mensajes
+                          </h4>
+                          <p className="text-muted-foreground text-sm">
+                            Monitorea el estado de los mensajes procesados.
+                          </p>
+                        </div>
+                        <div className="flex justify-end pt-2">
+                          <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
+                        </div>
+                      </div>
+                    </div>
+                  </Link>
+                </div>
+              </div>
+
+              {/* Gestión de usuarios Section */}
+              <div className="bg-card border border-border rounded-4xl shadow-sm p-6">
+                <div className="mb-6">
+                  <h3 className="text-xl font-bold text-card-foreground mb-2">Gestión de usuarios</h3>
+                  <p className="text-muted-foreground text-sm">
+                    Administra roles y equipos desde un solo lugar.
+                  </p>
+                </div>
+
+                {/* User Management Grid - 2 columns */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {/* Usuarios */}
+                  <Link href="/dashboard/users">
+                    <div className="group hover:shadow-md transition-all duration-300 cursor-pointer bg-card border border-border rounded-2xl h-full hover:border-muted p-4 flex gap-4 items-start">
+                      <div className="flex-shrink-0">
+                        <Image
+                          src="/Listas/options.svg"
+                          alt="Usuarios"
+                          width={70}
+                          height={70}
+                          className="opacity-70"
+                        />
+                      </div>
+                      <div className="flex-1 flex flex-col justify-between">
+                        <div>
+                          <h4 className="font-semibold text-card-foreground text-base mb-1">
+                            Usuarios
+                          </h4>
+                          <p className="text-muted-foreground text-sm">
+                            Crea usuarios nuevos y administra sus roles.
+                          </p>
+                        </div>
+                        <div className="flex justify-end pt-2">
+                          <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
+                        </div>
+                      </div>
+                    </div>
+                  </Link>
+
+                  {/* Administradores Regulares */}
+                  <Link href="/dashboard/administradores">
+                    <div className="group hover:shadow-md transition-all duration-300 cursor-pointer bg-card border border-border rounded-2xl h-full hover:border-muted p-4 flex gap-4 items-start">
+                      <div className="flex-shrink-0">
+                        <Image
+                          src="/Listas/options.svg"
+                          alt="Administradores"
+                          width={70}
+                          height={70}
+                          className="opacity-70"
+                        />
+                      </div>
+                      <div className="flex-1 flex flex-col justify-between">
+                        <div>
+                          <h4 className="font-semibold text-card-foreground text-base mb-1">
+                            Administradores Regulares
+                          </h4>
+                          <p className="text-muted-foreground text-sm">
+                            Crea y supervisa Administradores Generales activos.
+                          </p>
+                        </div>
+                        <div className="flex justify-end pt-2">
+                          <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
+                        </div>
+                      </div>
+                    </div>
+                  </Link>
+                </div>
+              </div>
+
+              {/* Configuración y seguridad Section */}
+              <div className="bg-card border border-border rounded-4xl shadow-sm p-6">
+                <div className="mb-6">
+                  <h3 className="text-xl font-bold text-card-foreground mb-2">Configuración y seguridad</h3>
+                  <p className="text-muted-foreground text-sm">
+                    Mantén la plataforma alineada con las políticas de TEMS.
+                  </p>
+                </div>
+
+                {/* Configuration Grid - 2 columns */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {/* Configuración */}
+                  <Link href="/dashboard/configuracion">
+                    <div className="group hover:shadow-md transition-all duration-300 cursor-pointer bg-card border border-border rounded-2xl h-full hover:border-muted p-4 flex gap-4 items-start">
+                      <div className="flex-shrink-0">
+                        <Image
+                          src="/Listas/options.svg"
+                          alt="Configuración"
+                          width={70}
+                          height={70}
+                          className="opacity-70"
+                        />
+                      </div>
+                      <div className="flex-1 flex flex-col justify-between">
+                        <div>
+                          <h4 className="font-semibold text-card-foreground text-base mb-1">
+                            Configuración
+                          </h4>
+                          <p className="text-muted-foreground text-sm">
+                            Ajusta parámetros y valores del entorno.
+                          </p>
+                        </div>
+                        <div className="flex justify-end pt-2">
+                          <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
+                        </div>
+                      </div>
+                    </div>
+                  </Link>
+
+                  {/* Integración Encryption */}
+                  <Link href="/dashboard/integracion">
+                    <div className="group hover:shadow-md transition-all duration-300 cursor-pointer bg-card border border-border rounded-2xl h-full hover:border-muted p-4 flex gap-4 items-start">
+                      <div className="flex-shrink-0">
+                        <Image
+                          src="/Listas/options.svg"
+                          alt="Integración Encryption"
+                          width={70}
+                          height={70}
+                          className="opacity-70"
+                        />
+                      </div>
+                      <div className="flex-1 flex flex-col justify-between">
+                        <div>
+                          <h4 className="font-semibold text-card-foreground text-base mb-1">
+                            Integración Encryption
+                          </h4>
+                          <p className="text-muted-foreground text-sm">
+                            Administra claves, rutas y políticas de Encryption.
+                          </p>
+                        </div>
+                        <div className="flex justify-end pt-2">
+                          <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
+                        </div>
+                      </div>
+                    </div>
+                  </Link>
+                </div>
+              </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
     </div>
   )
 }

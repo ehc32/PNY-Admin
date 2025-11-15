@@ -9,9 +9,10 @@ import { Separator } from "@/components/ui/separator"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useAuth } from "@/lib/auth-context"
-import { obtenerUsuarioPorId, actualizarPerfil, type UserProfile } from "@/lib/api/user-service"
+import { obtenerUsuarioPorId, actualizarPerfil, cambiarPassword, type UserProfile, type UpdatePasswordData } from "@/lib/api/user-service"
+import { getMaintenanceStats, getWorkOrderStats, type MaintenanceStats, type WorkOrderStats } from "@/lib/api/statistics-service"
 import { getUserIdFromToken } from "@/lib/jwt-utils"
-import { User, Mail, Phone, IdCard, Shield, Edit3, Save, X, AlertCircle, Loader2 } from "lucide-react"
+import { User, Mail, Phone, IdCard, Shield, Edit3, Save, X, AlertCircle, Loader2, Activity, CheckCircle, Clock, AlertTriangle, Lock } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { toast } from "sonner"
 
@@ -22,10 +23,20 @@ export default function PerfilPage() {
   const [saving, setSaving] = useState(false)
   const [userData, setUserData] = useState<UserProfile | null>(null)
   const [editData, setEditData] = useState<Partial<UserProfile>>({})
+  const [maintenanceStats, setMaintenanceStats] = useState<MaintenanceStats | null>(null)
+  const [workOrderStats, setWorkOrderStats] = useState<WorkOrderStats | null>(null)
+  const [statsLoading, setStatsLoading] = useState(true)
+  const [showPasswordModal, setShowPasswordModal] = useState(false)
+  const [passwordData, setPasswordData] = useState<UpdatePasswordData>({
+    currentPassword: "",
+    newPassword: ""
+  })
+  const [changingPassword, setChangingPassword] = useState(false)
 
   useEffect(() => {
     if (token) {
       cargarPerfil()
+      cargarEstadisticas()
     }
   }, [token])
 
@@ -50,6 +61,33 @@ export default function PerfilPage() {
       toast.error("Error al cargar la información del perfil")
     } finally {
       setLoading(false)
+    }
+  }
+
+  const cargarEstadisticas = async () => {
+    if (!token) return
+
+    try {
+      setStatsLoading(true)
+      
+      // Cargar estadísticas en paralelo
+      const [maintenanceData, workOrderData] = await Promise.allSettled([
+        getMaintenanceStats(token),
+        getWorkOrderStats(token)
+      ])
+
+      if (maintenanceData.status === 'fulfilled') {
+        setMaintenanceStats(maintenanceData.value)
+      }
+
+      if (workOrderData.status === 'fulfilled') {
+        setWorkOrderStats(workOrderData.value)
+      }
+    } catch (error) {
+      console.error("Error al cargar estadísticas:", error)
+      // No mostramos toast de error para estadísticas, solo las ocultamos
+    } finally {
+      setStatsLoading(false)
     }
   }
 
@@ -84,6 +122,26 @@ export default function PerfilPage() {
     }
   }
 
+  const handlePasswordChange = async () => {
+    if (!token || !passwordData.currentPassword || !passwordData.newPassword) {
+      toast.error("Por favor completa todos los campos")
+      return
+    }
+
+    setChangingPassword(true)
+    try {
+      await cambiarPassword(token, passwordData)
+      setShowPasswordModal(false)
+      setPasswordData({ currentPassword: "", newPassword: "" })
+      toast.success("Contraseña cambiada correctamente")
+    } catch (error) {
+      console.error("Error al cambiar contraseña:", error)
+      toast.error("Error al cambiar la contraseña")
+    } finally {
+      setChangingPassword(false)
+    }
+  }
+
   if (loading) {
     return (
       <div className="container mx-auto p-6 max-w-4xl">
@@ -111,193 +169,356 @@ export default function PerfilPage() {
   }
 
   const initials = userData.name?.split(' ').map(n => n[0]).join('').toUpperCase() || "U"
+  
+  // Helper function to get role name
+  const getRoleName = (rol: string | { _id: string; name: string } | undefined): string => {
+    if (!rol) return "Usuario"
+    if (typeof rol === 'string') return rol
+    return rol.name
+  }
 
   return (
-    <div className="container mx-auto p-6 max-w-4xl space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Mi Perfil</h1>
-          <p className="text-muted-foreground">Gestiona tu información personal</p>
+    <div className="min-h-screen bg-background">
+      {/* Header with primary accent */}
+      <div className="bg-primary text-primary-foreground px-6 py-4">
+        <div className="max-w-7xl mx-auto">
+          <h1 className="text-2xl font-bold">Perfil de administrador</h1>
         </div>
-        {!isEditing ? (
-          <Button onClick={handleEdit} className="gap-2">
-            <Edit3 className="h-4 w-4" />
-            Editar Perfil
-          </Button>
-        ) : (
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={handleCancel} className="gap-2" disabled={saving}>
-              <X className="h-4 w-4" />
-              Cancelar
-            </Button>
-            <Button onClick={handleSave} disabled={saving} className="gap-2">
-              {saving ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Save className="h-4 w-4" />
-              )}
-              {saving ? "Guardando..." : "Guardar"}
-            </Button>
-          </div>
-        )}
       </div>
 
-      {/* Profile Card */}
-      <Card className="overflow-hidden">
-        <div className="h-32 bg-gradient-to-r from-primary via-primary/90 to-primary/80 relative">
-          <div className="absolute inset-0 bg-gradient-to-r from-blue-600/20 to-purple-600/20" />
-        </div>
-        <CardContent className="relative pt-0 pb-6">
-          <div className="flex flex-col sm:flex-row items-start sm:items-end gap-4 -mt-16">
-            <Avatar className="h-24 w-24 border-4 border-background shadow-xl ring-2 ring-primary/20">
-              <AvatarImage src="" alt={userData.name} />
-              <AvatarFallback className="text-xl font-bold bg-gradient-to-br from-primary to-primary/80 text-primary-foreground">
-                {initials}
-              </AvatarFallback>
-            </Avatar>
-            <div className="flex-1 pt-4">
-              <h2 className="text-2xl font-bold">{userData.name}</h2>
-              <p className="text-muted-foreground">{userData.assignedPosition || "Sin cargo asignado"}</p>
-              <Badge variant="secondary" className="mt-2">
-                <Shield className="h-3 w-3 mr-1" />
-                {userData.assignedRol || "Usuario"}
-              </Badge>
+      <div className="max-w-7xl mx-auto p-6 space-y-6">
+
+      {/* Profile Information Card */}
+      <Card className="bg-card border-border">
+        <CardContent className="p-6">
+          <div className="flex items-start gap-6">
+            {/* Avatar */}
+            <div className="flex-shrink-0">
+              <div className="relative">
+                <Avatar className="h-20 w-20 border-2 border-border">
+                  <AvatarImage src="" alt={userData.name} />
+                  <AvatarFallback className="text-lg font-bold bg-primary text-primary-foreground">
+                    {initials}
+                  </AvatarFallback>
+                </Avatar>
+                <button 
+                  onClick={() => setIsEditing(true)}
+                  className="absolute bottom-0 right-0 bg-primary text-primary-foreground rounded-full p-1.5 hover:bg-primary/90 transition-colors"
+                >
+                  <Edit3 className="h-3 w-3" />
+                </button>
+              </div>
             </div>
+
+            {/* User Info Grid */}
+            <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-6">
+              {/* Información del usuario */}
+              <div>
+                <h3 className="text-sm font-semibold text-muted-foreground mb-3">Información del usuario</h3>
+                <div className="space-y-2">
+                  <div>
+                    <p className="text-xs text-muted-foreground">Nombre de usuario</p>
+                    {isEditing ? (
+                      <Input
+                        value={editData.name || ""}
+                        onChange={(e) => setEditData({...editData, name: e.target.value})}
+                        className="text-sm"
+                      />
+                    ) : (
+                      <p className="text-sm font-medium text-foreground">{userData.name}</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Contactos */}
+              <div>
+                <h3 className="text-sm font-semibold text-muted-foreground mb-3">Contactos</h3>
+                <div className="space-y-2">
+                  <div>
+                    <p className="text-xs text-muted-foreground">Correo electrónico</p>
+                    {isEditing ? (
+                      <Input
+                        type="email"
+                        value={editData.email || ""}
+                        onChange={(e) => setEditData({...editData, email: e.target.value})}
+                        className="text-sm"
+                      />
+                    ) : (
+                      <p className="text-sm font-medium text-foreground">{userData.email}</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Cargos */}
+              <div>
+                <h3 className="text-sm font-semibold text-muted-foreground mb-3">Cargos</h3>
+                <div className="space-y-2">
+                  <div>
+                    <p className="text-xs text-muted-foreground">Cargo desempeñado</p>
+                    {isEditing ? (
+                      <Input
+                        value={editData.assignedPosition || ""}
+                        onChange={(e) => setEditData({...editData, assignedPosition: e.target.value})}
+                        className="text-sm"
+                        placeholder="Sin cargo asignado"
+                      />
+                    ) : (
+                      <p className="text-sm font-medium text-foreground">{userData.assignedPosition || "Sin cargo asignado"}</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Document Info Row */}
+          <Separator className="my-6" />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div>
+              <p className="text-xs text-muted-foreground">Tipo de documento</p>
+              <p className="text-sm font-medium text-foreground">{userData.typeDocument}</p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">Número de creditos</p>
+              <p className="text-sm font-medium text-foreground">{userData.numberDocument}</p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">Rol asignado</p>
+              <p className="text-sm font-medium text-foreground">{getRoleName(userData.assignedRol)}</p>
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex gap-3 mt-6">
+            {isEditing ? (
+              <>
+                <Button 
+                  onClick={handleSave}
+                  disabled={saving}
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground"
+                >
+                  {saving ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      Guardando...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="h-4 w-4 mr-2" />
+                      Guardar cambios
+                    </>
+                  )}
+                </Button>
+                <Button 
+                  variant="outline" 
+                  onClick={handleCancel}
+                  disabled={saving}
+                  className="border-border"
+                >
+                  <X className="h-4 w-4 mr-2" />
+                  Cancelar
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button 
+                  onClick={() => setIsEditing(true)}
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground"
+                >
+                  <Edit3 className="h-4 w-4 mr-2" />
+                  Actualizar perfil
+                </Button>
+                <Button 
+                  variant="outline" 
+                  onClick={() => setShowPasswordModal(true)}
+                  className="border-border"
+                >
+                  <Lock className="h-4 w-4 mr-2" />
+                  Cambiar contraseña
+                </Button>
+              </>
+            )}
           </div>
         </CardContent>
       </Card>
 
-      {/* Information Cards */}
-      <div className="grid md:grid-cols-2 gap-6">
-        {/* Personal Information */}
-        <Card className="hover:shadow-lg transition-shadow duration-200">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <User className="h-5 w-5 text-primary" />
-              Información Personal
-            </CardTitle>
-            <CardDescription>
-              Datos básicos de tu cuenta
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">Nombre Completo</Label>
-              {isEditing ? (
-                <Input
-                  id="name"
-                  value={editData.name || ""}
-                  onChange={(e) => setEditData({...editData, name: e.target.value})}
-                  placeholder="Ingresa tu nombre completo"
-                />
-              ) : (
-                <p className="text-sm font-medium bg-muted/50 p-2 rounded-md">{userData.name}</p>
+
+      {/* Statistics Cards */}
+      {!statsLoading && (maintenanceStats || workOrderStats) && (
+        <div className="space-y-6">
+          <div>
+            <h2 className="text-xl font-semibold text-primary mb-4">Solicitudes de actividades de mantenimiento</h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+              {/* Maintenance Statistics */}
+              {maintenanceStats && (
+                <>
+                  <Card className="bg-card border-border hover:shadow-md transition-shadow">
+                    <CardContent className="p-6">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm text-muted-foreground mb-1">Total Solicitudes</p>
+                          <p className="text-3xl font-bold text-foreground">{maintenanceStats.All}</p>
+                        </div>
+                        <div className="bg-green-100 rounded-full p-3">
+                          <Activity className="w-6 h-6 text-green-600" />
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                  <Card className="bg-card border-border hover:shadow-md transition-shadow">
+                    <CardContent className="p-6">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm text-muted-foreground mb-1">Total Ejecutadas</p>
+                          <p className="text-3xl font-bold text-foreground">{maintenanceStats.Executed}</p>
+                        </div>
+                        <div className="bg-green-100 rounded-full p-3">
+                          <CheckCircle className="w-6 h-6 text-green-600" />
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                  <Card className="bg-card border-border hover:shadow-md transition-shadow">
+                    <CardContent className="p-6">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm text-muted-foreground mb-1">Total pendientes</p>
+                          <p className="text-3xl font-bold text-foreground">{maintenanceStats.Pending}</p>
+                        </div>
+                        <div className="bg-orange-100 rounded-full p-3">
+                          <Clock className="w-6 h-6 text-orange-600" />
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </>
               )}
             </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="email">Correo Electrónico</Label>
-              {isEditing ? (
-                <Input
-                  id="email"
-                  type="email"
-                  value={editData.email || ""}
-                  onChange={(e) => setEditData({...editData, email: e.target.value})}
-                  placeholder="correo@ejemplo.com"
-                />
-              ) : (
-                <div className="flex items-center gap-2 bg-muted/50 p-2 rounded-md">
-                  <Mail className="h-4 w-4 text-muted-foreground" />
-                  <p className="text-sm font-medium">{userData.email}</p>
-                </div>
+
+            <h2 className="text-xl font-semibold text-primary mb-4">Órdenes de trabajo</h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* Work Order Statistics */}
+              {workOrderStats && (
+                <>
+                  <Card className="bg-card border-border hover:shadow-md transition-shadow">
+                    <CardContent className="p-6">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm text-muted-foreground mb-1">Total Órdenes Trabajo</p>
+                          <p className="text-3xl font-bold text-foreground">{workOrderStats.resumen.total}</p>
+                        </div>
+                        <div className="bg-green-100 rounded-full p-3">
+                          <Activity className="w-6 h-6 text-green-600" />
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                  <Card className="bg-card border-border hover:shadow-md transition-shadow">
+                    <CardContent className="p-6">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm text-muted-foreground mb-1">Total OT Ejecutadas</p>
+                          <p className="text-3xl font-bold text-foreground">{workOrderStats.resumen.ejecutadas}</p>
+                        </div>
+                        <div className="bg-green-100 rounded-full p-3">
+                          <CheckCircle className="w-6 h-6 text-green-600" />
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                  <Card className="bg-card border-border hover:shadow-md transition-shadow">
+                    <CardContent className="p-6">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm text-muted-foreground mb-1">Total Vencidas</p>
+                          <p className="text-3xl font-bold text-foreground">{workOrderStats.resumen.vencidas}</p>
+                        </div>
+                        <div className="bg-red-100 rounded-full p-3">
+                          <AlertTriangle className="w-6 h-6 text-red-600" />
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </>
               )}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="phone">Teléfono</Label>
-              {isEditing ? (
-                <Input
-                  id="phone"
-                  value={editData.phone || ""}
-                  onChange={(e) => setEditData({...editData, phone: e.target.value})}
-                  placeholder="+57 300 123 4567"
-                />
-              ) : (
-                <div className="flex items-center gap-2 bg-muted/50 p-2 rounded-md">
-                  <Phone className="h-4 w-4 text-muted-foreground" />
-                  <p className="text-sm font-medium">{userData.phone}</p>
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Document Information */}
-        <Card className="hover:shadow-lg transition-shadow duration-200">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <IdCard className="h-5 w-5 text-primary" />
-              Información de Documento
-            </CardTitle>
-            <CardDescription>
-              Datos de identificación y rol
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label>Tipo de Documento</Label>
-              <p className="text-sm font-medium bg-muted/50 p-2 rounded-md">{userData.typeDocument}</p>
-            </div>
-            
-            <div className="space-y-2">
-              <Label>Número de Documento</Label>
-              <p className="text-sm font-medium bg-muted/50 p-2 rounded-md">{userData.numberDocument}</p>
-            </div>
-
-            <Separator />
-
-            <div className="space-y-2">
-              <Label>Cargo Asignado</Label>
-              <p className="text-sm font-medium bg-muted/50 p-2 rounded-md">{userData.assignedPosition || "Sin cargo asignado"}</p>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Rol del Sistema</Label>
-              <Badge variant="outline" className="text-sm">
-                <Shield className="h-3 w-3 mr-1" />
-                {userData.assignedRol || "Usuario"}
-              </Badge>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Additional Info Card */}
-      <Card className="hover:shadow-lg transition-shadow duration-200">
-        <CardHeader>
-          <CardTitle>Información de la Cuenta</CardTitle>
-          <CardDescription>
-            Detalles adicionales de tu cuenta en el sistema
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
-            <div className="p-4 bg-primary/5 rounded-lg border border-primary/20">
-              <div className="text-2xl font-bold text-primary">{userData.id?.slice(-6) || "N/A"}</div>
-              <div className="text-sm text-muted-foreground">ID de Usuario</div>
-            </div>
-            <div className="p-4 bg-green-500/5 rounded-lg border border-green-500/20">
-              <div className="text-2xl font-bold text-green-600">Activo</div>
-              <div className="text-sm text-muted-foreground">Estado de la Cuenta</div>
-            </div>
-            <div className="p-4 bg-blue-500/5 rounded-lg border border-blue-500/20">
-              <div className="text-2xl font-bold text-blue-600">Admin</div>
-              <div className="text-sm text-muted-foreground">Nivel de Acceso</div>
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      )}
+
+      {/* Password Change Modal */}
+      {showPasswordModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <Card className="w-full max-w-md mx-4 bg-card border-border">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-card-foreground">
+                <Lock className="h-5 w-5" />
+                Cambiar Contraseña
+              </CardTitle>
+              <CardDescription>
+                Ingresa tu contraseña actual y la nueva contraseña
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="currentPassword">Contraseña Actual</Label>
+                <Input
+                  id="currentPassword"
+                  type="password"
+                  value={passwordData.currentPassword}
+                  onChange={(e) => setPasswordData({...passwordData, currentPassword: e.target.value})}
+                  placeholder="Ingresa tu contraseña actual"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="newPassword">Nueva Contraseña</Label>
+                <Input
+                  id="newPassword"
+                  type="password"
+                  value={passwordData.newPassword}
+                  onChange={(e) => setPasswordData({...passwordData, newPassword: e.target.value})}
+                  placeholder="Ingresa tu nueva contraseña"
+                />
+              </div>
+              <div className="flex gap-3 pt-4">
+                <Button
+                  onClick={handlePasswordChange}
+                  disabled={changingPassword}
+                  className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground"
+                >
+                  {changingPassword ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      Cambiando...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="h-4 w-4 mr-2" />
+                      Cambiar Contraseña
+                    </>
+                  )}
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setShowPasswordModal(false)
+                    setPasswordData({ currentPassword: "", newPassword: "" })
+                  }}
+                  disabled={changingPassword}
+                  className="border-border"
+                >
+                  <X className="h-4 w-4 mr-2" />
+                  Cancelar
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      </div>
     </div>
   )
 }

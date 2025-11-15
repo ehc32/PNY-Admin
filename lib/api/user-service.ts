@@ -8,7 +8,10 @@ export interface UserProfile {
   typeDocument: string
   numberDocument: string
   assignedPosition?: string
-  assignedRol?: string
+  assignedRol?: string | {
+    _id: string
+    name: string
+  }
 }
 
 export interface UpdatePasswordData {
@@ -38,7 +41,7 @@ export async function obtenerPerfil(token: string): Promise<UserProfile> {
 
 // Obtener usuario por ID
 export async function obtenerUsuarioPorId(token: string, userId: string): Promise<UserProfile> {
-  const response = await fetch(`${API_BASE_URL}/user/${userId}`, {
+  const response = await fetch(`${API_BASE_URL}/users/${userId}`, {
     method: "GET",
     headers: {
       "Content-Type": "application/json",

@@ -127,6 +127,29 @@ PNY
               </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
+             <SidebarGroupContent className={cn("px-2", isCollapsed && "px-1")}>
+            <SidebarMenu className="gap-0.5">
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  isActive={pathname === "/dashboard"}
+                  tooltip="Dashboard"
+                  className={cn(
+                    "group relative h-10 transition-all duration-200 rounded-md",
+                    pathname === "/dashboard"
+                      ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                      : "hover:bg-sidebar-accent/50 text-sidebar-foreground/70 hover:text-sidebar-foreground",
+                    isCollapsed && "justify-center px-0",
+                  )}
+                >
+                  <Link href="/dashboard" className="flex items-center w-full">
+                    <LayoutDashboard className={cn("flex-shrink-0", isCollapsed ? "h-5 w-5" : "h-4 w-4")} />
+                    {!isCollapsed && <span className="flex-1 truncate text-sm ml-3">Acciones Generales</span>}
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
         </SidebarGroup>
 
         {menu.length > 0 && (
