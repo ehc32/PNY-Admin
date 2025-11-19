@@ -1,7 +1,6 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
 import { GenericTable, type TableColumn } from "@/components/generic-table"
 import { getUsers, deleteUser, type User } from "@/lib/api/users-service"
 import { useAuth } from "@/lib/auth-context"
@@ -19,7 +18,6 @@ import { Badge } from "@/components/ui/badge"
 import { AlertCircle } from "lucide-react"
 
 export default function GestionUsuariosPage() {
-  const router = useRouter()
   const { token } = useAuth()
   const [users, setUsers] = useState<User[]>([])
   const [isLoading, setIsLoading] = useState(false)
@@ -150,12 +148,11 @@ export default function GestionUsuariosPage() {
         data={users}
         columns={columns}
         isLoading={isLoading}
-        onNew={() => router.push("/users/add")}
         onEdit={handleView}
         onDelete={handleDeleteClick}
         onRefresh={fetchData}
         title="Gestión de Usuarios"
-        description="Visualiza y administra todos los usuarios del sistema"
+        description="Consulta, edita y elimina usuarios existentes registrados en el sistema"
         showActions={true}
         pageSize={10}
         searchPlaceholder="Buscar por nombre..."
