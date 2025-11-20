@@ -31,7 +31,6 @@ export default function AddUserPage() {
     password: "",
     confirmPassword: "",
     photoUrl: "",
-    assignedPosition: "",
     assignedRol: "",
     state: true,
   })
@@ -215,10 +214,10 @@ export default function AddUserPage() {
               {/* Tipo de documento */}
               <div className="space-y-2">
                 <Label htmlFor="typeDocument">
-                  Tipo de documento <span className="text-destructive">*</span>
+                  Tipo de documento <span className="">*</span>
                 </Label>
                 <Select value={formData.typeDocument} onValueChange={(v) => handleChange("typeDocument", v)}>
-                  <SelectTrigger id="typeDocument">
+                  <SelectTrigger id="typeDocument" className="pl-10 h-11 w-full">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -253,7 +252,7 @@ export default function AddUserPage() {
                   value={formData.assignedRol || "none"}
                   onValueChange={(v) => handleChange("assignedRol", v === "none" ? "" : v)}
                 >
-                  <SelectTrigger id="assignedRol">
+                  <SelectTrigger id="assignedRol" className="pl-10 h-11 w-full">
                     <SelectValue placeholder="Selecciona un rol" />
                   </SelectTrigger>
                   <SelectContent>
@@ -267,23 +266,6 @@ export default function AddUserPage() {
                 </Select>
               </div>
 
-              {/* Posición */}
-              <div className="space-y-2">
-                <Label htmlFor="assignedPosition">Posición</Label>
-                <Select
-                  value={formData.assignedPosition || "none"}
-                  onValueChange={(v) => handleChange("assignedPosition", v === "none" ? "" : v)}
-                >
-                  <SelectTrigger id="assignedPosition">
-                    <SelectValue placeholder="Selecciona una posición" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">Sin posición</SelectItem>
-                    <SelectItem value="Contratista">Contratista</SelectItem>
-                    <SelectItem value="Planta">Planta</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
 
               {/* Estado */}
               <div className="space-y-2">

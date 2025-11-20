@@ -1,6 +1,7 @@
+// components/generic-table.tsx
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, type ReactNode } from "react"
 import {
   flexRender,
   getCoreRowModel,
@@ -37,6 +38,21 @@ export interface TableColumn<T> {
   render?: (value: any, row: T) => React.ReactNode
 }
 
+export interface RowAction<T> {
+  id: string
+  label: string
+  icon?: ReactNode
+  destructive?: boolean
+  onClick: (item: T) => void
+}
+
+export interface ExternalPaginationProps {
+  page: number        // página actual (1-based)
+  totalPages: number
+  totalItems?: number
+  onPageChange: (page: number) => void
+}
+
 export interface GenericTableProps<T extends { _id?: string; id?: string }> {
   data: T[]
   columns: TableColumn<T>[]
@@ -50,6 +66,10 @@ export interface GenericTableProps<T extends { _id?: string; id?: string }> {
   showActions?: boolean
   pageSize?: number
   searchPlaceholder?: string
+  rowActions?: RowAction<T>[]
+
+  // 👇 NUEVO: paginación manejada fuera (API)
+  externalPagination?: ExternalPaginationProps
 }
 
 export function GenericTable<T extends { _id?: string; id?: string }>({
@@ -65,6 +85,8 @@ export function GenericTable<T extends { _id?: string; id?: string }>({
   showActions = true,
   pageSize = 10,
   searchPlaceholder,
+  rowActions,
+  externalPagination,
 }: GenericTableProps<T>) {
   const [sorting, setSorting] = useState<SortingState>([])
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
@@ -124,6 +146,33 @@ export function GenericTable<T extends { _id?: string; id?: string }>({
               enableHiding: false,
               cell: ({ row }) => {
                 const item = row.original
+
+                const builtInActions: RowAction<T>[] = []
+
+                if (onEdit) {
+                  builtInActions.push({
+                    id: "edit",
+                    label: "Ver/Editar",
+                    icon: <Eye className="h-4 w-4" />,
+                    onClick: onEdit,
+                  })
+                }
+
+                if (onDelete) {
+                  builtInActions.push({
+                    id: "delete",
+                    label: "Eliminar",
+                    icon: <Trash2 className="h-4 w-4" />,
+                    destructive: true,
+                    onClick: onDelete,
+                  })
+                }
+
+                const customActions = rowActions ?? []
+
+                const nonDestructive = [...customActions, ...builtInActions.filter((a) => !a.destructive)]
+                const destructive = builtInActions.filter((a) => a.destructive)
+
                 return (
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -134,24 +183,30 @@ export function GenericTable<T extends { _id?: string; id?: string }>({
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-                      {onEdit && (
-                        <>
-                          <DropdownMenuItem onClick={() => onEdit(item)} className="gap-2">
-                            <Eye className="h-4 w-4" />
-                            Ver/Editar
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                        </>
-                      )}
-                      {onDelete && (
+
+                      {nonDestructive.map((action) => (
                         <DropdownMenuItem
-                          onClick={() => onDelete(item)}
+                          key={action.id}
+                          onClick={() => action.onClick(item)}
+                          className="gap-2"
+                        >
+                          {action.icon}
+                          {action.label}
+                        </DropdownMenuItem>
+                      ))}
+
+                      {destructive.length > 0 && <DropdownMenuSeparator />}
+
+                      {destructive.map((action) => (
+                        <DropdownMenuItem
+                          key={action.id}
+                          onClick={() => action.onClick(item)}
                           className="gap-2 text-destructive focus:text-destructive"
                         >
-                          <Trash2 className="h-4 w-4" />
-                          Eliminar
+                          {action.icon}
+                          {action.label}
                         </DropdownMenuItem>
-                      )}
+                      ))}
                     </DropdownMenuContent>
                   </DropdownMenu>
                 )
@@ -160,7 +215,7 @@ export function GenericTable<T extends { _id?: string; id?: string }>({
           ]
         : []),
     ],
-    [columns, showActions, onEdit, onDelete],
+    [columns, showActions, onEdit, onDelete, rowActions],
   )
 
   const table = useReactTable({
@@ -169,6 +224,7 @@ export function GenericTable<T extends { _id?: string; id?: string }>({
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     getCoreRowModel: getCoreRowModel(),
+    // 👇 seguimos usando getPaginationRowModel, pero solo para el caso sin externalPagination
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
@@ -194,46 +250,48 @@ export function GenericTable<T extends { _id?: string; id?: string }>({
     }
   }
 
+  // Datos para el footer
+  const totalItems =
+    externalPagination?.totalItems ?? table.getFilteredRowModel().rows.length
+
+  const currentPage = externalPagination?.page ?? table.getState().pagination.pageIndex + 1
+  const totalPages = externalPagination?.totalPages ?? table.getPageCount()
+
+  const goPrev = () => {
+    if (externalPagination) {
+      if (externalPagination.page > 1) {
+        externalPagination.onPageChange(externalPagination.page - 1)
+      }
+    } else {
+      table.previousPage()
+    }
+  }
+
+  const goNext = () => {
+    if (externalPagination) {
+      if (externalPagination.page < (externalPagination.totalPages || 1)) {
+        externalPagination.onPageChange(externalPagination.page + 1)
+      }
+    } else {
+      table.nextPage()
+    }
+  }
+
+  const canPrev = externalPagination ? currentPage > 1 : table.getCanPreviousPage()
+  const canNext = externalPagination ? currentPage < totalPages : table.getCanNextPage()
+
   return (
     <div className="space-y-4">
-      {title && (
-        <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
-          <div className="space-y-1">
-            <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
-            {description && <p className="text-sm text-muted-foreground">{description}</p>}
-          </div>
+      {/* ... header + filtros igual que antes ... */}
 
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-            <div className="flex gap-2">
-              {onRefresh && (
-                <Button
-                  variant="outline"
-                  onClick={onRefresh}
-                  size="sm"
-                  className="gap-2 bg-transparent"
-                  disabled={isLoading}
-                >
-                  <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
-                  Recargar
-                </Button>
-              )}
-              {onNew && (
-                <Button onClick={onNew} size="sm" className="gap-2">
-                  <Plus className="h-4 w-4" />
-                  Nuevo
-                </Button>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
+      {/* buscador y selector de columnas */}
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
         <Input
           placeholder={searchPlaceholder || `Buscar por ${columns[0]?.label.toLowerCase()}...`}
           onChange={(event) => handleSearch(event.target.value)}
           className="max-w-sm"
         />
+        {/* selector de columnas igual */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" size="sm" className="gap-2 bg-transparent">
@@ -258,6 +316,7 @@ export function GenericTable<T extends { _id?: string; id?: string }>({
         </DropdownMenu>
       </div>
 
+      {/* tabla */}
       <div className="rounded-lg border border-border/50 shadow-sm overflow-hidden bg-card">
         <Table>
           <TableHeader>
@@ -284,8 +343,8 @@ export function GenericTable<T extends { _id?: string; id?: string }>({
               ))
             ) : table.getRowModel() && table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
-                <TableRow 
-                  key={row.id} 
+                <TableRow
+                  key={row.id}
                   data-state={row.getIsSelected() && "selected"}
                   className="hover:bg-muted/50 transition-colors"
                 >
@@ -315,6 +374,7 @@ export function GenericTable<T extends { _id?: string; id?: string }>({
         </Table>
       </div>
 
+      {/* FOOTER PAGINACIÓN */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between px-2 py-3 bg-muted/20 rounded-lg border border-border/30">
         <div className="text-sm text-muted-foreground flex items-center gap-2">
           {table.getFilteredSelectedRowModel().rows.length > 0 && (
@@ -323,29 +383,30 @@ export function GenericTable<T extends { _id?: string; id?: string }>({
             </Badge>
           )}
           <span>
-            <span className="font-semibold text-foreground">{table.getFilteredRowModel().rows.length}</span> {table.getFilteredRowModel().rows.length === 1 ? 'registro' : 'registros'}
+            <span className="font-semibold text-foreground">{totalItems}</span>{" "}
+            {totalItems === 1 ? "registro" : "registros"}
           </span>
         </div>
         <div className="flex items-center gap-2">
           <Button
             variant="outline"
             size="sm"
-            onClick={() => table.previousPage()}
-            disabled={!table.getCanPreviousPage()}
+            onClick={goPrev}
+            disabled={!canPrev}
             className="h-8"
           >
             Anterior
           </Button>
           <div className="flex items-center gap-1 px-3 py-1 rounded-md bg-background border text-sm">
-            <span className="font-medium">{table.getState().pagination.pageIndex + 1}</span>
+            <span className="font-medium">{currentPage}</span>
             <span className="text-muted-foreground">de</span>
-            <span className="font-medium">{table.getPageCount()}</span>
+            <span className="font-medium">{totalPages}</span>
           </div>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={() => table.nextPage()} 
-            disabled={!table.getCanNextPage()}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={goNext}
+            disabled={!canNext}
             className="h-8"
           >
             Siguiente

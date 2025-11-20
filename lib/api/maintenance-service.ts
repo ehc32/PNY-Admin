@@ -5,9 +5,11 @@ export interface MaintenanceRequest {
   requesterName: string
   requesterPhone: string
   serialNumber: string
-  trackingNumber: string
+  trackingNumber?: string          // <-- opcional
   issueDescription: string
-  inventoryCode: string
+  // El backend usa InventoryCode en creación
+  InventoryCode?: string
+  inventoryCode?: string
   maintenanceType: string
   workOrderStatus: boolean
   createdAt: string
@@ -19,12 +21,29 @@ export interface MaintenanceResponse {
   total: number
   page: number
   limit: number
+  totalPages: number
+}
+export interface MaintenanceResponse {
+  data: MaintenanceRequest[]
+  total: number
+  page: number
+  limit: number
+}
+// Payload EXACTO para crear (como el otro sistema)
+export type CreateMaintenancePayload = {
+  requesterName: string
+  requesterPhone: string
+  serialNumber: string
+  InventoryCode: string        // <-- I mayúscula
+  issueDescription: string
+  maintenanceType: string
+  createdAt: string            // "2025-11-12"
 }
 
 // Crear solicitud de mantenimiento
 export async function crearSolicitudMantenimiento(
-  token: string, 
-  requestData: Omit<MaintenanceRequest, '_id' | 'updatedAt'>
+  token: string,
+  requestData: CreateMaintenancePayload
 ): Promise<MaintenanceRequest> {
   const response = await fetch(createApiUrl("/application-maintenance"), {
     method: "POST",
@@ -34,7 +53,10 @@ export async function crearSolicitudMantenimiento(
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({}))
-    throw new Error(error.message || "Error al crear solicitud de mantenimiento")
+    console.error("Error al guardar mantenimiento:", error)
+    throw new Error(
+      error.message || "Error al guardar la solicitud de mantenimiento"
+    )
   }
 
   const data = await response.json()
@@ -58,14 +80,22 @@ export async function obtenerSolicitudesMantenimiento(
   }
 
   const data = await response.json()
+
+  const meta = data.meta ?? {}
+
+  const total = meta.total ?? data.total ?? 0
+  const currentPage = meta.page ?? data.page ?? page
+  const currentLimit = meta.limit ?? data.limit ?? limit
+  const totalPages = meta.totalPages ?? Math.ceil(total / currentLimit || 1)
+
   return {
     data: data.data || [],
-    total: data.total || 0,
-    page: data.page || page,
-    limit: data.limit || limit
+    total,
+    page: currentPage,
+    limit: currentLimit,
+    totalPages,
   }
 }
-
 // Obtener solicitud de mantenimiento por ID
 export async function obtenerSolicitudPorId(token: string, id: string): Promise<MaintenanceRequest> {
   const response = await fetch(createApiUrl(`/application-maintenance/${id}`), {

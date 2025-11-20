@@ -170,7 +170,7 @@ export function RegistroForm({ className, ...props }: React.ComponentProps<"form
               value={formData.typeDocument}
               onValueChange={(v) => handleChange("typeDocument", v)}
             >
-              <SelectTrigger id="type-document" className="pl-10 h-11">
+              <SelectTrigger id="type-document" className="pl-10 h-11 w-full">
                 <SelectValue placeholder="Selecciona un tipo" />
               </SelectTrigger>
               <SelectContent>
