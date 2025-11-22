@@ -14,6 +14,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
@@ -27,6 +28,9 @@ export default function ControlAccesoPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [selectedRol, setSelectedRol] = useState<string>("")
   const [selectedPosition, setSelectedPosition] = useState<string>("")
+  const [editName, setEditName] = useState("")
+  const [editEmail, setEditEmail] = useState("")
+  const [editPhone, setEditPhone] = useState("")
   const [isSaving, setIsSaving] = useState(false)
 
   const fetchData = async () => {
@@ -54,6 +58,9 @@ export default function ControlAccesoPage() {
 
   const handleEdit = (user: User) => {
     setSelectedUser(user)
+    setEditName(user.name)
+    setEditEmail(user.email)
+    setEditPhone(user.phone)
     const rolId = typeof user.assignedRol === 'string' ? user.assignedRol : user.assignedRol?._id || ""
     setSelectedRol(rolId)
     setSelectedPosition(user.assignedPosition || "")
@@ -63,20 +70,32 @@ export default function ControlAccesoPage() {
   const handleSave = async () => {
     if (!selectedUser || !token) return
 
+    // Validación básica
+    if (!editName.trim() || !editEmail.trim() || !editPhone.trim()) {
+      toast.error("Por favor completa todos los campos requeridos")
+      return
+    }
+
     setIsSaving(true)
     try {
       const updateData: any = {
+        name: editName.trim(),
+        email: editEmail.trim(),
+        phone: editPhone.trim(),
         state: true, // Activar el usuario al asignarle acceso
       }
       if (selectedRol) updateData.assignedRol = selectedRol
       if (selectedPosition) updateData.assignedPosition = selectedPosition
-      
+
       await updateUser(selectedUser._id, updateData, token)
       toast.success("Usuario activado y acceso asignado correctamente")
       setIsDialogOpen(false)
       setSelectedUser(null)
       setSelectedRol("")
       setSelectedPosition("")
+      setEditName("")
+      setEditEmail("")
+      setEditPhone("")
       // Recargar datos después de un pequeño delay para asegurar que el backend actualizó
       setTimeout(() => {
         fetchData()
@@ -145,7 +164,7 @@ export default function ControlAccesoPage() {
       render: (value) => {
         const isActive = value === true || value === "active"
         const isPending = value === false || value === "pending" || !value
-        
+
         if (isActive) {
           return (
             <Badge className="bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20">
@@ -201,6 +220,39 @@ export default function ControlAccesoPage() {
                   <div className="text-xs text-muted-foreground">
                     {selectedUser.typeDocument}: {selectedUser.numberDocument}
                   </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="edit-name">Nombre completo *</Label>
+                  <Input
+                    id="edit-name"
+                    value={editName}
+                    onChange={(e) => setEditName(e.target.value)}
+                    placeholder="Nombre completo"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="edit-email">Email *</Label>
+                  <Input
+                    id="edit-email"
+                    type="email"
+                    value={editEmail}
+                    onChange={(e) => setEditEmail(e.target.value)}
+                    placeholder="correo@ejemplo.com"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="edit-phone">Teléfono *</Label>
+                  <Input
+                    id="edit-phone"
+                    value={editPhone}
+                    onChange={(e) => setEditPhone(e.target.value)}
+                    placeholder="Teléfono"
+                  />
                 </div>
               </div>
 

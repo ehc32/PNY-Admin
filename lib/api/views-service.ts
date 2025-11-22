@@ -21,6 +21,16 @@ export interface Modulo {
   updatedAt?: string
 }
 
+export interface CreateModuloDto {
+  name: string
+  description?: string
+  state?: boolean
+}
+
+export interface UpdateModuloDto extends Partial<CreateModuloDto> {
+  // Interface para actualizaciones de módulos
+}
+
 export interface CreateViewDto {
   name: string
   description: string
@@ -134,7 +144,7 @@ export async function eliminarVista(token: string, id: string): Promise<void> {
 
 // Cambiar estado de una vista
 export async function cambiarEstadoVista(token: string, id: string, state: boolean): Promise<View> {
-  const response = await fetch(`${API_BASE_URL}/views/${id}/state`, {
+  const response = await fetch(`${API_BASE_URL}/views/${id}`, {
     method: "PATCH",
     headers: {
       "Content-Type": "application/json",
@@ -147,6 +157,86 @@ export async function cambiarEstadoVista(token: string, id: string, state: boole
   if (!response.ok) {
     const error = await response.json().catch(() => ({}))
     throw new Error(error.message || "Error al cambiar estado de vista")
+  }
+
+  const result = await response.json()
+  return result.result || result
+}
+
+// Crear un nuevo módulo
+export async function crearModulo(token: string, data: CreateModuloDto): Promise<Modulo> {
+  const response = await fetch(`${API_BASE_URL}/modulos`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(data),
+  })
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}))
+    throw new Error(error.message || "Error al crear módulo")
+  }
+
+  const result = await response.json()
+  return result.result || result
+}
+
+// Actualizar un módulo
+export async function actualizarModulo(token: string, id: string, data: UpdateModuloDto): Promise<Modulo> {
+  const response = await fetch(`${API_BASE_URL}/modulos/${id}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(data),
+  })
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}))
+    throw new Error(error.message || "Error al actualizar módulo")
+  }
+
+  const result = await response.json()
+  return result.result || result
+}
+
+// Eliminar un módulo
+export async function eliminarModulo(token: string, id: string): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/modulos/${id}`, {
+    method: "DELETE",
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+  })
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}))
+    throw new Error(error.message || "Error al eliminar módulo")
+  }
+}
+
+// Cambiar estado de un módulo
+export async function cambiarEstadoModulo(token: string, id: string, state: boolean): Promise<Modulo> {
+  const response = await fetch(`${API_BASE_URL}/modulos/${id}`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ state }),
+  })
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}))
+    throw new Error(error.message || "Error al cambiar estado de módulo")
   }
 
   const result = await response.json()

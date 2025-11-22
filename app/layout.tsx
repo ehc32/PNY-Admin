@@ -47,7 +47,7 @@ export default function RootLayout({
     <html lang="es" suppressHydrationWarning>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <NextTopLoader color="#3b82f6" showSpinner height={3} crawlSpeed={150} shadow="0 0 10px #3b82f6, 0 0 5px #3b82f6" />
-                <Providers>{children}</Providers>
+        <Providers>{children}</Providers>
 
         <Toaster richColors position="top-right" />
       </body>

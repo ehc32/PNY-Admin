@@ -111,12 +111,6 @@ export function AppSidebar() {
 
               <div className="flex flex-col items-end gap-1">
                 <ModeToggle />
-                <Link
-                  href="/perfil"
-                  className="text-[11px] rounded-full border border-sidebar-border px-2 py-0.5 text-sidebar-foreground/70 hover:text-primary hover:border-primary transition-colors"
-                >
-                  Mi perfil
-                </Link>
               </div>
             </>
           )}
@@ -333,7 +327,7 @@ export function AppSidebar() {
                   className={cn(
                     "group h-9 rounded-md text-sm transition-all duration-200",
                     pathname === "/configuracion" ||
-                    pathname.startsWith("/configuracion/")
+                      pathname.startsWith("/configuracion/")
                       ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium shadow-sm"
                       : "hover:bg-sidebar-accent/50 text-sidebar-foreground/70 hover:text-sidebar-foreground",
                     isCollapsed && "justify-center px-0"

@@ -1,8 +1,8 @@
 import { ReactNode } from "react"
 import { redirect } from "next/navigation"
 import { cookies } from "next/headers"
-import { AppSidebar } from "@/components/sidebar"
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
+import { AppSidebar } from "@/components/sidebar"
 
 export default async function DashboardLayout({ children }: { children: ReactNode }) {
   // Lee cookie de auth

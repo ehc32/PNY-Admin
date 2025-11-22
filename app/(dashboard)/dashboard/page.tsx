@@ -134,10 +134,10 @@ export default function DashboardPage() {
                         <div className="flex-1 flex flex-col justify-between gap-2">
                           <div>
                             <h4 className="font-semibold text-card-foreground text-sm mb-1">
-                              Bandeja de pendientes
+                              Gestion de Usuarios
                             </h4>
                             <p className="text-muted-foreground text-xs sm:text-sm">
-                              Aprueba o rechaza las solicitudes pendientes.
+                              Gestion de los usuarios del sistema.
                             </p>
                           </div>
                           <div className="flex justify-end">
@@ -162,10 +162,10 @@ export default function DashboardPage() {
                         <div className="flex-1 flex flex-col justify-between gap-2">
                           <div>
                             <h4 className="font-semibold text-card-foreground text-sm mb-1">
-                              Archivos
+                              Control de Acceso
                             </h4>
                             <p className="text-muted-foreground text-xs sm:text-sm">
-                              Consulta y organiza archivos del repositorio seguro.
+                              Control de los accesos del sistema.
                             </p>
                           </div>
                           <div className="flex justify-end">
@@ -190,10 +190,10 @@ export default function DashboardPage() {
                         <div className="flex-1 flex flex-col justify-between gap-2">
                           <div>
                             <h4 className="font-semibold text-card-foreground text-sm mb-1">
-                              Mensajes
+                              Crear Usuario
                             </h4>
                             <p className="text-muted-foreground text-xs sm:text-sm">
-                              Monitorea el estado de los mensajes procesados.
+                              Crea un nuevo usuario.
                             </p>
                           </div>
                           <div className="flex justify-end">
@@ -209,10 +209,10 @@ export default function DashboardPage() {
                 <section className="bg-card border border-border rounded-xl shadow-sm p-5">
                   <header className="mb-5">
                     <h3 className="text-lg sm:text-xl font-semibold text-card-foreground mb-1">
-                      Gestión de usuarios
+                      Gestión de Mantenimientos
                     </h3>
                     <p className="text-muted-foreground text-sm">
-                      Administra roles y equipos desde un solo lugar.
+                      Administra los mantenimientos desde un solo lugar.
                     </p>
                   </header>
 
@@ -279,10 +279,10 @@ export default function DashboardPage() {
                 <section className="bg-card border border-border rounded-xl shadow-sm p-5 mb-2">
                   <header className="mb-5">
                     <h3 className="text-lg sm:text-xl font-semibold text-card-foreground mb-1">
-                      Configuración y seguridad
+                      Modulo de Parametrizacion
                     </h3>
                     <p className="text-muted-foreground text-sm">
-                      Mantén la plataforma alineada con las políticas de TEMS.
+                      Modulo de Parametrizacion
                     </p>
                   </header>
 
@@ -302,7 +302,7 @@ export default function DashboardPage() {
                         <div className="flex-1 flex flex-col justify-between gap-2">
                           <div>
                             <h4 className="font-semibold text-card-foreground text-sm mb-1">
-                              Configuración
+                              Parametrizacion
                             </h4>
                             <p className="text-muted-foreground text-xs sm:text-sm">
                               Ajusta parámetros y valores del entorno.

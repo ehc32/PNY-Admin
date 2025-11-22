@@ -7,14 +7,17 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { useAuth } from "@/lib/auth-context"
-import { obtenerModulos, type Modulo } from "@/lib/api/views-service"
+import { obtenerModulos, eliminarModulo, cambiarEstadoModulo, type Modulo } from "@/lib/api/views-service"
 import { GenericTable } from "@/components/generic-table"
 import { toast } from "sonner"
+import { CreateModuloModal } from "@/components/create-modulo-modal"
 
 export default function ModulosPage() {
   const { token } = useAuth()
   const [modulos, setModulos] = useState<Modulo[]>([])
   const [loading, setLoading] = useState(true)
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
+  const [editingModulo, setEditingModulo] = useState<Modulo | null>(null)
 
   useEffect(() => {
     if (token) {
@@ -24,7 +27,7 @@ export default function ModulosPage() {
 
   const cargarDatos = async () => {
     if (!token) return
-    
+
     setLoading(true)
     try {
       const modulosData = await obtenerModulos(token)
@@ -39,11 +42,11 @@ export default function ModulosPage() {
 
   const handleEliminar = async (id: string) => {
     if (!token) return
-    
+
     if (!confirm("¿Estás seguro de que deseas eliminar este módulo?")) return
-    
+
     try {
-      // TODO: Implementar función de eliminación
+      await eliminarModulo(token, id)
       toast.success("Módulo eliminado correctamente")
       cargarDatos()
     } catch (error) {
@@ -54,15 +57,30 @@ export default function ModulosPage() {
 
   const handleCambiarEstado = async (id: string, nuevoEstado: boolean) => {
     if (!token) return
-    
+
     try {
-      // TODO: Implementar función de cambio de estado
+      await cambiarEstadoModulo(token, id, nuevoEstado)
       toast.success(`Módulo ${nuevoEstado ? 'activado' : 'desactivado'} correctamente`)
       cargarDatos()
     } catch (error) {
       console.error("Error al cambiar estado:", error)
       toast.error("Error al cambiar el estado del módulo")
     }
+  }
+
+  const handleEdit = (modulo: Modulo) => {
+    setEditingModulo(modulo)
+    setIsCreateModalOpen(true)
+  }
+
+  const handleCloseModal = () => {
+    setIsCreateModalOpen(false)
+    setEditingModulo(null)
+  }
+
+  const handleSuccess = () => {
+    cargarDatos()
+    handleCloseModal()
   }
 
   const columns = [
@@ -84,7 +102,7 @@ export default function ModulosPage() {
       accessor: "route" as keyof Modulo,
       sortable: true,
       render: (value: any, modulo: Modulo) => (
-        <code className="text-sm bg-muted px-2 py-1 rounded">{modulo.state}</code>
+        <code className="text-sm bg-muted px-2 py-1 rounded font-mono">{modulo.description || "-"}</code>
       )
     },
     {
@@ -114,7 +132,7 @@ export default function ModulosPage() {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => {/* TODO: Implementar edición */}}
+            onClick={() => handleEdit(modulo)}
             title="Editar"
           >
             <Edit className="h-4 w-4" />
@@ -151,7 +169,7 @@ export default function ModulosPage() {
             </div>
           </div>
         </div>
-        <Button onClick={() => toast.info("Función en desarrollo")}>
+        <Button onClick={() => setIsCreateModalOpen(true)}>
           <Plus className="h-4 w-4 mr-2" />
           Nuevo Módulo
         </Button>
@@ -174,6 +192,14 @@ export default function ModulosPage() {
           />
         </CardContent>
       </Card>
+
+      {/* Modal para crear/editar módulo */}
+      <CreateModuloModal
+        isOpen={isCreateModalOpen}
+        onClose={handleCloseModal}
+        onSuccess={handleSuccess}
+        editingModulo={editingModulo}
+      />
     </div>
   )
 }

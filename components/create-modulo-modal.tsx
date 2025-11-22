@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Switch } from "./ui/switch"
 import { useAuth } from "@/lib/auth-context"
-import { crearModulo, actualizarModulo, type Modulo, type CreateModuloDto } from "@/lib/api/modulos-service"
+import { crearModulo, actualizarModulo, type Modulo, type CreateModuloDto } from "@/lib/api/views-service"
 import { toast } from "sonner"
 
 interface CreateModuloModalProps {
@@ -110,7 +110,7 @@ export function CreateModuloModal({ isOpen, onClose, onSuccess, editingModulo }:
             {editingModulo ? "Editar Módulo" : "Nuevo Módulo"}
           </DialogTitle>
           <DialogDescription>
-            {editingModulo 
+            {editingModulo
               ? "Modifica los datos del módulo seleccionado"
               : "Completa los datos para crear un nuevo módulo en el sistema"
             }

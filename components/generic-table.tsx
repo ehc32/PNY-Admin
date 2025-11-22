@@ -141,78 +141,78 @@ export function GenericTable<T extends { _id?: string; id?: string }>({
       ),
       ...(showActions
         ? [
-            {
-              id: "actions",
-              enableHiding: false,
-              cell: ({ row }) => {
-                const item = row.original
+          {
+            id: "actions",
+            enableHiding: false,
+            cell: ({ row }) => {
+              const item = row.original
 
-                const builtInActions: RowAction<T>[] = []
+              const builtInActions: RowAction<T>[] = []
 
-                if (onEdit) {
-                  builtInActions.push({
-                    id: "edit",
-                    label: "Ver/Editar",
-                    icon: <Eye className="h-4 w-4" />,
-                    onClick: onEdit,
-                  })
-                }
+              if (onEdit) {
+                builtInActions.push({
+                  id: "edit",
+                  label: "Ver/Editar",
+                  icon: <Eye className="h-4 w-4" />,
+                  onClick: onEdit,
+                })
+              }
 
-                if (onDelete) {
-                  builtInActions.push({
-                    id: "delete",
-                    label: "Eliminar",
-                    icon: <Trash2 className="h-4 w-4" />,
-                    destructive: true,
-                    onClick: onDelete,
-                  })
-                }
+              if (onDelete) {
+                builtInActions.push({
+                  id: "delete",
+                  label: "Eliminar",
+                  icon: <Trash2 className="h-4 w-4" />,
+                  destructive: true,
+                  onClick: onDelete,
+                })
+              }
 
-                const customActions = rowActions ?? []
+              const customActions = rowActions ?? []
 
-                const nonDestructive = [...customActions, ...builtInActions.filter((a) => !a.destructive)]
-                const destructive = builtInActions.filter((a) => a.destructive)
+              const nonDestructive = [...customActions, ...builtInActions.filter((a) => !a.destructive)]
+              const destructive = builtInActions.filter((a) => a.destructive)
 
-                return (
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" className="h-8 w-8 p-0">
-                        <span className="sr-only">Abrir menú</span>
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuLabel>Acciones</DropdownMenuLabel>
+              return (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="h-8 w-8 p-0">
+                      <span className="sr-only">Abrir menú</span>
+                      <MoreHorizontal className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuLabel>Acciones</DropdownMenuLabel>
 
-                      {nonDestructive.map((action) => (
-                        <DropdownMenuItem
-                          key={action.id}
-                          onClick={() => action.onClick(item)}
-                          className="gap-2"
-                        >
-                          {action.icon}
-                          {action.label}
-                        </DropdownMenuItem>
-                      ))}
+                    {nonDestructive.map((action) => (
+                      <DropdownMenuItem
+                        key={action.id}
+                        onClick={() => action.onClick(item)}
+                        className="gap-2"
+                      >
+                        {action.icon}
+                        {action.label}
+                      </DropdownMenuItem>
+                    ))}
 
-                      {destructive.length > 0 && <DropdownMenuSeparator />}
+                    {destructive.length > 0 && <DropdownMenuSeparator />}
 
-                      {destructive.map((action) => (
-                        <DropdownMenuItem
-                          key={action.id}
-                          onClick={() => action.onClick(item)}
-                          className="gap-2 text-destructive focus:text-destructive"
-                        >
-                          {action.icon}
-                          {action.label}
-                        </DropdownMenuItem>
-                      ))}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                )
-              },
-            } as ColumnDef<T>,
-          ]
+                    {destructive.map((action) => (
+                      <DropdownMenuItem
+                        key={action.id}
+                        onClick={() => action.onClick(item)}
+                        className="gap-2 text-destructive focus:text-destructive"
+                      >
+                        {action.icon}
+                        {action.label}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )
+            },
+          } as ColumnDef<T>,
+        ]
         : []),
     ],
     [columns, showActions, onEdit, onDelete, rowActions],
